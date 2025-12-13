@@ -131,10 +131,10 @@ export default function Home() {
                       {/* Row 1 */}
                       {/* 1. Net Worth Card (Large) */}
                       <div className="col-span-12 md:col-span-8 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-100 hover:border-primary/20 transition-colors group/card relative overflow-hidden">
-                        <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4 md:mb-6 gap-2">
-                          <div className="text-center md:text-left">
+                        <div className="flex flex-col md:flex-row md:justify-between items-center mb-4 md:mb-6 gap-2">
+                          <div className="flex flex-col md:flex-row items-center md:items-baseline gap-1 md:gap-3 text-center md:text-left">
                             <p className="text-zinc-400 text-sm font-medium">Net Worth</p>
-                            <h4 className="text-3xl font-bold text-white mt-1">₹84,23,500</h4>
+                            <h4 className="text-3xl font-bold text-white">₹84,23,500</h4>
                           </div>
                           <div className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-medium flex items-center w-fit mx-auto md:mx-0">
                             <TrendingUp className="h-3 w-3 mr-1" /> +12.5%
@@ -157,9 +157,9 @@ export default function Home() {
 
                       {/* 2. My Cards (New) - Stacked Cards Visual */}
                       <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-200 hover:border-white/20 transition-colors relative overflow-hidden group/cards">
-                        <div className="flex justify-between items-start mb-2">
+                        <div className="flex justify-between items-center mb-6">
                           <div>
-                            <p className="text-zinc-400 text-sm font-medium -mt-2">My Cards</p>
+                            <p className="text-zinc-400 text-sm font-medium">My Cards</p>
                           </div>
                           <Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-400 hover:text-white hover:bg-white/10"><Plus className="h-3 w-3" /></Button>
                         </div>
