@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import Logo from '@/components/Logo';
+import ThemeToggle from '@/components/ThemeToggle';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { useAuthUI } from '@/context/AuthUIContext';
@@ -121,6 +122,7 @@ export default function Header() {
 
                     {/* Hide buttons when sidebar is open to avoid clutter/distraction */}
                     <div className="flex items-center gap-4">
+                        <ThemeToggle />
 
                         {/* Actions Area */}
                         <div className={`flex gap-4 items-center transition-opacity duration-300 ${isSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'} ${isMobileMenuOpen ? 'hidden' : 'flex'}`}>
