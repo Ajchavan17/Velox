@@ -40,7 +40,6 @@ export async function POST(req: Request) {
             provider: 'credentials',
             isVerified: false,
             verificationToken,
-            verificationToken,
             verificationTokenExpiry,
             categories: [
                 // Income
