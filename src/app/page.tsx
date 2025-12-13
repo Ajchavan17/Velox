@@ -155,9 +155,11 @@ export default function Home() {
 
                       {/* 2. My Cards (New) - Stacked Cards Visual */}
                       <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-200 hover:border-white/20 transition-colors relative overflow-hidden group/cards">
-                        <div className="flex justify-between items-center mb-6">
-                          <h4 className="text-white font-bold">My Cards</h4>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400"><Plus className="h-4 w-4" /></Button>
+                        <div className="flex justify-between items-start mb-6">
+                          <div>
+                            <p className="text-zinc-400 text-sm font-medium">My Cards</p>
+                          </div>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-400 hover:text-white hover:bg-white/10"><Plus className="h-3 w-3" /></Button>
                         </div>
                         <div className="relative h-48 mt-4 mx-2">
                           {/* Card 1 (Back) */}
@@ -188,23 +190,27 @@ export default function Home() {
                       {/* Row 2 */}
                       {/* 3. Asset Allocation */}
                       <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-300 hover:border-secondary/20 transition-colors">
-                        <h4 className="text-white font-bold mb-4">Asset Allocation</h4>
-                        <div className="flex items-center justify-center relative h-32">
-                          <div className="absolute inset-0 rounded-full border-[10px] border-zinc-800" />
-                          <div className="absolute inset-0 rounded-full border-[10px] border-primary border-t-transparent border-r-transparent border-l-transparent rotate-45" />
-                          <div className="absolute inset-0 rounded-full border-[10px] border-secondary border-b-transparent border-r-transparent border-l-transparent -rotate-12 opacity-80" />
-                          <div className="text-center">
-                            <p className="text-xs text-zinc-500">Total</p>
-                            <p className="text-lg font-bold text-white">100%</p>
+                        <div className="flex justify-between items-start mb-6">
+                          <div>
+                            <p className="text-zinc-400 text-sm font-medium">Asset Allocation</p>
                           </div>
                         </div>
-                        <div className="mt-4 space-y-2">
-                          <div className="flex justify-between text-xs">
-                            <div className="flex items-center text-zinc-400"><div className="w-1.5 h-1.5 rounded-full bg-primary mr-2" /> Stocks</div>
+                        <div className="flex items-center justify-center relative h-40">
+                          <div className="absolute inset-0 rounded-full border-[12px] border-zinc-800" />
+                          <div className="absolute inset-0 rounded-full border-[12px] border-primary border-t-transparent border-r-transparent border-l-transparent rotate-45 transform transition-transform hover:scale-105 duration-500" />
+                          <div className="absolute inset-0 rounded-full border-[12px] border-secondary border-b-transparent border-r-transparent border-l-transparent -rotate-12 opacity-80 transform transition-transform hover:scale-105 duration-500" />
+                          <div className="text-center">
+                            <p className="text-xs text-zinc-500">Total</p>
+                            <p className="text-xl font-bold text-white">100%</p>
+                          </div>
+                        </div>
+                        <div className="mt-6 space-y-3">
+                          <div className="flex justify-between text-sm">
+                            <div className="flex items-center text-zinc-400"><div className="w-2 h-2 rounded-full bg-primary mr-2" /> Stocks</div>
                             <span className="text-white">45%</span>
                           </div>
-                          <div className="flex justify-between text-xs">
-                            <div className="flex items-center text-zinc-400"><div className="w-1.5 h-1.5 rounded-full bg-secondary mr-2" /> Crypto</div>
+                          <div className="flex justify-between text-sm">
+                            <div className="flex items-center text-zinc-400"><div className="w-2 h-2 rounded-full bg-secondary mr-2" /> Crypto</div>
                             <span className="text-white">35%</span>
                           </div>
                         </div>
@@ -212,8 +218,10 @@ export default function Home() {
 
                       {/* 4. Transactions (Table) */}
                       <div className="col-span-12 md:col-span-8 rounded-2xl bg-[#111113] border border-white/5 p-0 overflow-hidden animate-slide-up delay-300 hover:border-white/10 transition-colors">
-                        <div className="p-6 border-b border-white/5 flex justify-between items-center">
-                          <h4 className="text-white font-bold">Live Transactions</h4>
+                        <div className="p-6 border-b border-white/5 flex justify-between items-start">
+                          <div>
+                            <p className="text-zinc-400 text-sm font-medium">Live Transactions</p>
+                          </div>
                           <Button variant="ghost" size="sm" className="text-xs">View All</Button>
                         </div>
                         <div className="p-2">
@@ -241,8 +249,10 @@ export default function Home() {
                       {/* Row 3 */}
                       {/* 5. Monthly Budget (New) */}
                       <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-400 hover:border-accent/20 transition-colors">
-                        <div className="flex justify-between items-center mb-4">
-                          <h4 className="text-white font-bold">Monthly Budget</h4>
+                        <div className="flex justify-between items-start mb-6">
+                          <div>
+                            <p className="text-zinc-400 text-sm font-medium">Monthly Budget</p>
+                          </div>
                           <span className="text-xs text-accent bg-accent/10 px-2 py-1 rounded">On Track</span>
                         </div>
                         <div className="space-y-5">
@@ -301,7 +311,11 @@ export default function Home() {
 
                       {/* 7. Debt Manager (New) */}
                       <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-400 hover:border-red-500/20 transition-colors">
-                        <h4 className="text-white font-bold mb-4">Debt Manager</h4>
+                        <div className="flex justify-between items-start mb-6">
+                          <div>
+                            <p className="text-zinc-400 text-sm font-medium">Debt Manager</p>
+                          </div>
+                        </div>
                         <div className="bg-red-500/5 rounded-xl p-4 border border-red-500/10 mb-3">
                           <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-red-500/10 rounded-lg text-red-500">
