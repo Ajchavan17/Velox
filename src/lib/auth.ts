@@ -20,7 +20,9 @@ export const authOptions: NextAuthOptions = {
 
                 await dbConnect();
 
-                const user = await User.findOne({ email: credentials.email }).select('+password');
+                const user = await User.findOne({ email: credentials.email })
+                    .select('+password _id name email image plan subscriptionStatus isVerified lockUntil failedLoginAttempts lastLockDuration')
+                    .lean();
                 console.log('User found:', user ? 'Yes' : 'No');
 
                 if (!user) {
