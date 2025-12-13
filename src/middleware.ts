@@ -5,7 +5,7 @@ export default withAuth(
     function middleware(req) {
         const token = req.nextauth.token;
         const isAuth = !!token;
-        const isPricingPage = req.nextUrl.pathname === '/pricing';
+        const isPricingPage = req.nextUrl.pathname.startsWith('/pricing');
         const isDashboard = req.nextUrl.pathname.startsWith('/dashboard');
         const hasPlan = token?.plan && token.plan !== null;
 
@@ -29,7 +29,7 @@ export default withAuth(
         callbacks: {
             authorized: ({ token, req }) => {
                 // Allow access to root and pricing even if not authenticated
-                if (req.nextUrl.pathname === '/' || req.nextUrl.pathname === '/pricing') {
+                if (req.nextUrl.pathname === '/' || req.nextUrl.pathname.startsWith('/pricing')) {
                     return true;
                 }
                 // Require token for other protected routes
@@ -47,5 +47,10 @@ export const config = {
         '/accounts/:path*',
         '/reports/:path*',
         '/settings/:path*',
+        '/debts/:path*',
+        '/loans/:path*',
+        '/budget/:path*',
+        '/investments/:path*',
+        '/profile/:path*',
     ],
 };
