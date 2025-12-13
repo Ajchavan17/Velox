@@ -17,28 +17,24 @@ import { toast } from "react-hot-toast";
 import { useAuthUI } from "@/context/AuthUIContext";
 import { useSession } from "next-auth/react";
 
+import { Modal } from "@/components/ui/Modal";
+
 export default function PricingPage() {
     const [isYearly, setIsYearly] = useState(false);
     const [isLoading, setIsLoading] = useState<'free' | 'pro' | null>(null);
+    const [comingSoonPlan, setComingSoonPlan] = useState<string | null>(null);
     const router = useRouter();
     const { data: session, update } = useSession();
     const { openRegister } = useAuthUI();
 
     const onSubscribe = async (plan: 'free' | 'pro') => {
-        if (!session) {
-            openRegister();
+        if (plan === 'pro') {
+            setComingSoonPlan("Pro");
             return;
         }
 
-        if (plan === 'pro') {
-            toast('Pro plan is coming soon!', {
-                icon: '🚀',
-                style: {
-                    borderRadius: '10px',
-                    background: '#333',
-                    color: '#fff',
-                },
-            });
+        if (!session) {
+            openRegister();
             return;
         }
 
@@ -70,18 +66,7 @@ export default function PricingPage() {
     };
 
     const handleEnterprise = () => {
-        if (!session) {
-            openRegister();
-            return;
-        }
-        toast('Enterprise plan is coming soon!', {
-            icon: '🏢',
-            style: {
-                borderRadius: '10px',
-                background: '#333',
-                color: '#fff',
-            },
-        });
+        setComingSoonPlan("Enterprise");
     };
 
     return (
@@ -273,6 +258,32 @@ export default function PricingPage() {
                     </div>
                 </div>
             </main>
+
+            <Modal
+                isOpen={!!comingSoonPlan}
+                onClose={() => setComingSoonPlan(null)}
+                title={`${comingSoonPlan} Plan`}
+            >
+                <div className="text-center py-6">
+                    <div className="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span className="text-4xl">🚀</span>
+                    </div>
+                    <p className="text-xl font-medium mb-2">Coming Soon!</p>
+                    <p className="text-muted-foreground">
+                        We are currently putting the finishing touches on the <strong>{comingSoonPlan}</strong> plan.
+                        <br />
+                        Please check back shortly or stick with the Free plan to get started today.
+                    </p>
+                    <div className="mt-8">
+                        <Button
+                            className="w-full"
+                            onClick={() => setComingSoonPlan(null)}
+                        >
+                            Got it
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
