@@ -100,7 +100,7 @@ export default function Home() {
                   <div className="h-20 border-b border-white/5 flex items-center justify-between px-4 md:px-8 bg-black/10 backdrop-blur-sm">
                     <div className="flex items-center gap-4 text-zinc-500 w-full max-w-md">
                       <Search className="h-4 w-4" />
-                      <div className="h-8 bg-zinc-900/50 rounded-lg w-full flex items-center px-3 text-sm">Search transactions...</div>
+                      <div className="h-8 bg-zinc-900/50 rounded-lg w-full items-center px-3 text-sm hidden md:flex">Search transactions...</div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="relative">
@@ -112,7 +112,7 @@ export default function Home() {
 
                   {/* Dashboard Content Grid */}
                   <div className="p-4 md:p-8 overflow-hidden h-full">
-                    <div className="flex items-center justify-between mb-8 animate-slide-up">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 gap-4 animate-slide-up">
                       <div>
                         <h3 className="text-2xl font-bold text-white">Good Evening, Alex</h3>
                         <p className="text-zinc-400 text-sm">Here's what's happening today.</p>
