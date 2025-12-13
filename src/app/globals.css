@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+:root {
+  /* Light Mode Palette - Softer & High Contrast */
+  --background: #f4f4f5;
+  /* Zinc 100 - Softer than pure white */
+  --foreground: #09090b;
+  /* Zinc 950 */
+
+  --primary: #059669;
+  /* Emerald 600 */
+  --primary-foreground: #ffffff;
+
+  --secondary: #7c3aed;
+  /* Violet 600 */
+  --secondary-foreground: #ffffff;
+
+  --accent: #0891b2;
+  /* Cyan 600 */
+  --accent-foreground: #ffffff;
+
+  --muted: #e4e4e7;
+  /* Zinc 200 */
+  --muted-foreground: #52525b;
+  /* Zinc 600 - Darker for better readability */
+
+  --card: #ffffff;
+  /* White cards on off-white background */
+  --card-foreground: #09090b;
+
+  --border: #d4d4d8;
+  /* Zinc 300 */
+  --ring: var(--primary);
+}
+
+.dark {
+  /* Nano Banana Palette (Dark Mode) */
+  --background: #050505;
+  --foreground: #ededed;
+
+  --primary: #00FF94;
+  /* Neon Green */
+  --primary-foreground: #000000;
+
+  --secondary: #D946EF;
+  /* Neon Purple */
+  --secondary-foreground: #ffffff;
+
+  --accent: #00E5FF;
+  /* Cyan */
+  --accent-foreground: #000000;
+
+  --muted: #1f2937;
+  --muted-foreground: #9ca3af;
+
+  --card: rgba(20, 20, 20, 0.6);
+  --card-foreground: #ffffff;
+
+  --border: #333333;
+  --ring: var(--primary);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-border: var(--border);
+
+  --font-sans: var(--font-outfit);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-outfit), sans-serif;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-card {
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Hide number input arrows */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}

@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Velox
 
-## Getting Started
+![Velox Banner](https://via.placeholder.com/1200x400.png?text=Velox+Financial+Dashboard)
 
-First, run the development server:
+<div align="center">
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+**Personal Financial Intelligence, Redefined.**
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[![Next.js](https://img.shields.io/badge/Next.js-15.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.0-blue?style=for-the-badge&logo=react)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Emerald?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+</div>
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🚀 Overview
 
-To learn more about Next.js, take a look at the following resources:
+**Velox** is a cutting-edge personal finance management application designed to give you complete control over your financial life. Unlike traditional trackers, Velox focuses on **liquidity**, **debt management**, and **relationship-based lending/borrowing**.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Built with modern web technologies, it features a stunning, responsive UI with dark mode support, intuitive data visualization, and seamless transaction tracking.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ✨ Key Features
 
-## Deploy on Vercel
+### 📊 Comprehensive Dashboard
+- **Real-time Liquidity**: View total cash across all accounts instantly.
+- **Credit Pulse**: Monitor credit card utilization and debt status.
+- **Net Debt Position**: Visualize what you owe vs. what you are owed.
+- **Burn Analysis**: Track monthly spending trends with interactive charts.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 💰 Accounts & Cards
+- **Unified View**: Manage bank accounts and credit cards in one place.
+- **Smart Tracking**: Monitor balance available and credit limits.
+- **Visual Cards**: Beautifully designed card components with usage indicators.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 🤝 Debt & Loans Manager
+- **IOU Tracking**: Keep track of informal debts (borrowed/lent) with friends and family.
+- **Loan Amortization**: Detailed EMI schedules, principal/interest breakdown, and payment tracking.
+- **Settlement**: Easy flows to settle debts and record partial payments.
+
+### 💸 Transaction Hub
+- **Detailed History**: Filterable list of all income and expenses.
+- **Categorization**: Smart categorization for better spending insights.
+- **Quick Actions**: Record transactions effortlessly.
+
+### 🎨 Personalization
+- **Theme Support**: Seamless Light/Dark mode switching.
+- **Responsive Design**: Mobile-first architecture for finance on the go.
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4 + CSS Variables
+- **Database**: MongoDB (Mongoose)
+- **Auth**: NextAuth.js
+- **Icons**: Lucide React
+- **Toast**: React Hot Toast
+
+## ⚡ Getting Started
+
+### Prerequisites
+- Node.js 18+
+- MongoDB Database (Local or Atlas)
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/yourusername/velox.git
+    cd velox
+    ```
+
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
+
+3.  **Environment Setup**
+    Create a `.env` file in the root directory:
+    ```env
+    MONGODB_URI=your_mongodb_connection_string
+    NEXTAUTH_SECRET=your_nextauth_secret_key
+    NEXTAUTH_URL=http://localhost:3000
+    EMAIL_SERVER=smtp://username:password@smtp.example.com:587
+    EMAIL_FROM=noreply@example.com
+    ```
+
+4.  **Run the development server**
+    ```bash
+    npm run dev
+    ```
+
+    Open [http://localhost:3000](http://localhost:3000) with your browser.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please fork the repository and create a pull request for any features or bug fixes.
+
+1.  Fork the Project
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the Branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ by Velox Team</sub>
+</div>
