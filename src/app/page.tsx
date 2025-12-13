@@ -76,8 +76,10 @@ export default function Home() {
 
             {/* Abstract Visual - Interactive Dashboard Preview */}
             <div className="mt-20 relative mx-auto max-w-7xl">
-              <div className="aspect-[16/10] rounded-3xl border border-white/10 bg-[#0A0A0B] shadow-2xl overflow-hidden flex relative group">
-                <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+              <div className="relative rounded-2xl border border-white/10 bg-[#09090b] shadow-2xl overflow-hidden flex flex-col md:flex-row h-auto min-h-[600px] md:h-[800px] w-full max-w-7xl mx-auto">
+                {/* Background Gradients */}
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-violet-500/5 via-transparent to-emerald-500/5" />
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
 
                 {/* Sidebar Mockup */}
                 <div className="w-20 border-r border-white/5 flex flex-col items-center py-8 gap-8 bg-black/20 backdrop-blur-sm z-10 hidden md:flex">
@@ -97,7 +99,7 @@ export default function Home() {
                 {/* Main Dashboard Area */}
                 <div className="flex-1 flex flex-col bg-zinc-950/30">
                   {/* Header Mockup */}
-                  <div className="h-20 border-b border-white/5 flex items-center justify-between px-4 md:px-8 bg-black/10 backdrop-blur-sm">
+                  <div className="h-20 border-b border-white/5 flex items-center justify-between px-4 md:px-8 bg-black/10 backdrop-blur-sm shrink-0">
                     <div className="flex items-center gap-4 text-zinc-500 w-full max-w-md">
                       <Search className="h-4 w-4" />
                       <div className="h-8 bg-zinc-900/50 rounded-lg w-full items-center px-3 text-sm hidden md:flex">Search transactions...</div>
@@ -129,12 +131,12 @@ export default function Home() {
                       {/* Row 1 */}
                       {/* 1. Net Worth Card (Large) */}
                       <div className="col-span-12 md:col-span-8 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-100 hover:border-primary/20 transition-colors group/card relative overflow-hidden">
-                        <div className="flex justify-between items-start mb-4 md:mb-6">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4 md:mb-6 gap-2">
                           <div>
-                            <p className="text-zinc-400 text-sm font-medium -mt-3">Net Worth</p>
+                            <p className="text-zinc-400 text-sm font-medium">Net Worth</p>
+                            <h4 className="text-3xl font-bold text-white mt-1">₹84,23,500</h4>
                           </div>
-                          <div><h4 className=" text-2xl md:text-3xl font-bold text-white -mt-4">₹84,23,500</h4></div>
-                          <div className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-medium flex items-center -mt-3">
+                          <div className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-medium flex items-center w-fit">
                             <TrendingUp className="h-3 w-3 mr-1" /> +12.5%
                           </div>
                         </div>
