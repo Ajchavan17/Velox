@@ -45,11 +45,50 @@ export default function AboutPage() {
                                     We're building a platform that combines bank-grade security with the aesthetics and performance of a high-end consumer app. No more spreadsheets, no more clunky interfaces. Just pure financial clarity.
                                 </p>
                             </div>
-                            <div className="relative h-[400px] rounded-2xl overflow-hidden glass-card border-white/5 p-2">
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 opacity-50" />
-                                <div className="w-full h-full bg-zinc-900/50 rounded-xl flex items-center justify-center">
-                                    {/* Placeholder for Office/Team Image */}
-                                    <span className="text-zinc-600 font-medium">Our Journey Visualized</span>
+                            <div className="relative h-[450px] rounded-2xl overflow-hidden glass-card border-white/5 p-6 flex flex-col">
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5" />
+                                <h3 className="text-xl font-bold mb-6 text-center z-10 relative">Our Journey</h3>
+
+                                <div className="flex-1 relative z-10 pl-4 overflow-y-auto custom-scrollbar">
+                                    {/* Timeline Line */}
+                                    <div className="absolute left-[27px] top-2 bottom-4 w-0.5 bg-zinc-800" />
+
+                                    {/* Milestones */}
+                                    <div className="space-y-8 relative">
+                                        {[
+                                            { date: "Q1 2024", title: "Inception", desc: "The idea of Velox was born.", active: true },
+                                            { date: "Q3 2024", title: "Alpha Build", desc: "Core architecture & secure backend.", active: true },
+                                            { date: "Q4 2024", title: "Public Beta", desc: "We are here. Live for early adopters.", active: true, current: true },
+                                            { date: "2025", title: "Expansion", desc: "Mobile App & AI Insights.", active: false }
+                                        ].map((item, index) => (
+                                            <div key={index} className="group relative flex items-start gap-4">
+                                                {/* Node */}
+                                                <div className={`relative z-10 w-6 h-6 rounded-full border-4 flex-shrink-0 transition-all duration-300 ${item.current
+                                                        ? "bg-primary border-primary shadow-[0_0_15px_rgba(0,255,148,0.5)] scale-110"
+                                                        : item.active
+                                                            ? "bg-zinc-900 border-primary"
+                                                            : "bg-zinc-900 border-zinc-700 group-hover:border-zinc-500"
+                                                    }`}>
+                                                    {item.current && <div className="absolute inset-0 rounded-full animate-ping bg-primary/20" />}
+                                                </div>
+
+                                                {/* Content */}
+                                                <div className={`flex-1 pt-0.5 transition-all duration-300 ${item.active ? "opacity-100" : "opacity-50 group-hover:opacity-80"}`}>
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <h4 className={`font-semibold ${item.current ? "text-primary" : "text-foreground"}`}>
+                                                            {item.title}
+                                                        </h4>
+                                                        <span className="text-xs font-mono text-zinc-500 bg-zinc-900/50 px-2 py-0.5 rounded">
+                                                            {item.date}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors">
+                                                        {item.desc}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>
