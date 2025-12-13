@@ -14,8 +14,11 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { useAuthUI } from "@/context/AuthUIContext";
+
 export default function Home() {
   const { data: session, status } = useSession();
+  const { openRegister } = useAuthUI();
   const router = useRouter();
 
   useEffect(() => {
@@ -56,11 +59,14 @@ export default function Home() {
               </p>
             </div>
             <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/register">
-                <Button variant="neon" size="lg" className="text-lg px-8 w-full sm:w-auto h-12">
-                  Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              <Button
+                variant="neon"
+                size="lg"
+                className="text-lg px-8 w-full sm:w-auto h-12"
+                onClick={openRegister}
+              >
+                Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
               <Link href="#demo">
                 <Button variant="ghost" size="lg" className="text-lg px-8 w-full sm:w-auto h-12 border border-zinc-800 hover:bg-zinc-900">
                   View Demo
@@ -183,7 +189,7 @@ export default function Home() {
           </div>
         </section>
       </main>
-    </div>
+    </div >
   );
 }
 
