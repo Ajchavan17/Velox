@@ -1,19 +1,17 @@
+"use client";
+
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Users, Target, Shield, Zap, Heart, Globe } from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { useSession } from "next-auth/react";
+import { useAuthUI } from "@/context/AuthUIContext";
 
-export const metadata = {
-    title: "About Us - Velox",
-    description: "Learn about our mission to revolutionize personal finance.",
-};
+export default function AboutPage() {
+    const { data: session } = useSession();
+    const { openRegister } = useAuthUI();
 
-export default async function AboutPage() {
-    const session = await getServerSession(authOptions);
     return (
         <div className="min-h-screen bg-background flex flex-col">
             <main className="flex-1">
@@ -110,12 +108,6 @@ export default async function AboutPage() {
                             <h2 className="text-3xl font-bold text-foreground mb-4">Meet the Team</h2>
                             <p className="text-zinc-400">The diverse group of thinkers and doers behind Velox.</p>
                         </div>
-                        <div className="grid md:grid-cols-4 gap-8 justify-center">
-                            <div className="group relative col-start-2 col-span-2 md:col-start-auto md:col-span-1 md:col-start-2"> {/* Center on mobile if grid-cols-4, or just simplify grid */}
-                                {/* Actually, if it's just one person, maybe center it? Let's stick to grid or flex center */}
-                            </div>
-                        </div>
-                        {/* Let's simplify the grid for a single item */}
                         <div className="flex justify-center">
                             <div className="group relative w-64 text-center">
                                 <div className="aspect-square rounded-xl overflow-hidden bg-zinc-800 mb-4 relative">
@@ -144,11 +136,14 @@ export default async function AboutPage() {
                                 <p className="text-zinc-400 text-lg">
                                     Start tracking your wealth with Velox today. It's free to get started.
                                 </p>
-                                <Link href="/register">
-                                    <Button variant="neon" size="lg" className="px-8">
-                                        Get Started Now
-                                    </Button>
-                                </Link>
+                                <Button
+                                    variant="neon"
+                                    size="lg"
+                                    className="px-8"
+                                    onClick={openRegister}
+                                >
+                                    Get Started Now
+                                </Button>
                             </div>
                         </div>
                     </section>
