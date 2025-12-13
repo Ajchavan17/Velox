@@ -132,11 +132,11 @@ export default function Home() {
                       {/* 1. Net Worth Card (Large) */}
                       <div className="col-span-12 md:col-span-8 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-100 hover:border-primary/20 transition-colors group/card relative overflow-hidden">
                         <div className="flex flex-col md:flex-row md:justify-between items-center mb-4 md:mb-6 gap-2">
-                          <div className="flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-4 text-center md:text-left">
+                          <div className="flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-4 text-center md:text-left -mt-4">
                             <p className="text-zinc-400 text-sm font-medium">Net Worth</p>
                             <h4 className="text-3xl font-bold text-white">₹84,23,500</h4>
                           </div>
-                          <div className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-medium flex items-center w-fit mx-auto md:mx-0">
+                          <div className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-medium flex items-center w-fit mx-auto md:mx-0 -mt-4">
                             <TrendingUp className="h-3 w-3 mr-1" /> +12.5%
                           </div>
                         </div>
@@ -157,9 +157,9 @@ export default function Home() {
 
                       {/* 2. My Cards (New) - Stacked Cards Visual */}
                       <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-200 hover:border-white/20 transition-colors relative overflow-hidden group/cards">
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex justify-between items-center mb-6 -mt-3">
                           <div>
-                            <p className="text-zinc-400 text-sm font-medium">My Cards</p>
+                            <p className="text-zinc-400 text-sm font-medium ">My Cards</p>
                           </div>
                           <Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-400 hover:text-white hover:bg-white/10"><Plus className="h-3 w-3" /></Button>
                         </div>
@@ -198,12 +198,15 @@ export default function Home() {
                           </div>
                         </div>
                         <div className="flex items-center justify-center relative h-32 md:h-40">
-                          <div className="absolute inset-0 rounded-full border-[10px] md:border-[12px] border-zinc-800" />
-                          <div className="absolute inset-0 rounded-full border-[10px] md:border-[12px] border-primary border-t-transparent border-r-transparent border-l-transparent rotate-45 transform transition-transform hover:scale-105 duration-500" />
-                          <div className="absolute inset-0 rounded-full border-[10px] md:border-[12px] border-secondary border-b-transparent border-r-transparent border-l-transparent -rotate-12 opacity-80 transform transition-transform hover:scale-105 duration-500" />
-                          <div className="text-center">
-                            <p className="text-xs text-zinc-500">Total</p>
-                            <p className="text-lg md:text-xl font-bold text-white">100%</p>
+                          {/* Chart Container - Fixed Square to ensure Circle */}
+                          <div className="relative w-32 h-32 md:w-40 md:h-40">
+                            <div className="absolute inset-0 rounded-full border-[10px] md:border-[12px] border-zinc-800" />
+                            <div className="absolute inset-0 rounded-full border-[10px] md:border-[12px] border-primary border-t-transparent border-r-transparent border-l-transparent rotate-45 transform transition-transform hover:scale-105 duration-500" />
+                            <div className="absolute inset-0 rounded-full border-[10px] md:border-[12px] border-secondary border-b-transparent border-r-transparent border-l-transparent -rotate-12 opacity-80 transform transition-transform hover:scale-105 duration-500" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                              <p className="text-xs text-zinc-500">Total</p>
+                              <p className="text-lg md:text-xl font-bold text-white">100%</p>
+                            </div>
                           </div>
                         </div>
                         <div className="mt-6 space-y-3">
