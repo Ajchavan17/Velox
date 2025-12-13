@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 import Link from "next/link";
-import { ArrowRight, BarChart3, Globe, Lock, PieChart, Shield, Zap, TrendingUp, LayoutDashboard, Wallet, CreditCard, Search, Bell, Plus, MoreVertical, ShoppingBag, Coffee, Target, Radio } from "lucide-react";
+import { ArrowRight, BarChart3, Globe, Lock, PieChart, Shield, Zap, TrendingUp, LayoutDashboard, Wallet, CreditCard, Search, Bell, Plus, MoreVertical, ShoppingBag, Coffee, Target, Radio, Wifi } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -126,6 +126,7 @@ export default function Home() {
                     </div>
 
                     <div className="grid grid-cols-12 gap-6 h-full pb-20">
+                      {/* Row 1 */}
                       {/* 1. Net Worth Card (Large) */}
                       <div className="col-span-12 md:col-span-8 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-100 hover:border-primary/20 transition-colors group/card relative overflow-hidden">
                         <div className="flex justify-between items-start mb-6">
@@ -152,51 +153,65 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {/* 2. Asset Allocation (Donut) */}
-                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-200 hover:border-secondary/20 transition-colors">
-                        <h4 className="text-white font-bold mb-6">Asset Allocation</h4>
-                        <div className="flex items-center justify-center relative h-40">
-                          <div className="absolute inset-0 rounded-full border-[12px] border-zinc-800" />
-                          <div className="absolute inset-0 rounded-full border-[12px] border-primary border-t-transparent border-r-transparent border-l-transparent rotate-45 transform transition-transform hover:scale-105 duration-500" />
-                          <div className="absolute inset-0 rounded-full border-[12px] border-secondary border-b-transparent border-r-transparent border-l-transparent -rotate-12 opacity-80 transform transition-transform hover:scale-105 duration-500" />
-                          <div className="text-center">
-                            <p className="text-xs text-zinc-500">Total</p>
-                            <p className="text-xl font-bold text-white">100%</p>
+                      {/* 2. My Cards (New) - Stacked Cards Visual */}
+                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-200 hover:border-white/20 transition-colors relative overflow-hidden group/cards">
+                        <div className="flex justify-between items-center mb-6">
+                          <h4 className="text-white font-bold">My Cards</h4>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400"><Plus className="h-4 w-4" /></Button>
+                        </div>
+                        <div className="relative h-48 mt-4 mx-2">
+                          {/* Card 1 (Back) */}
+                          <div className="absolute top-0 w-full h-40 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/5 transform scale-95 opacity-60 translate-y-4 transition-transform group-hover/cards:translate-y-8 duration-500"></div>
+                          {/* Card 2 (Middle) */}
+                          <div className="absolute top-2 w-full h-40 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#4c1d95] border border-white/10 transform scale-98 translate-y-2 group-hover/cards:translate-y-4 transition-transform duration-500 shadow-xl">
+                            <div className="p-4 flex flex-col justify-between h-full text-white/50">
+                              <div className="flex justify-between"><span className="text-white font-bold tracking-widest">VELOX</span> <span className="text-xs">PLATINUM</span></div>
+                            </div>
+                          </div>
+                          {/* Card 3 (Front - Primary) */}
+                          <div className="absolute top-4 w-full h-40 rounded-xl bg-gradient-to-br from-primary to-[#047857] border border-white/10 shadow-2xl p-5 flex flex-col justify-between group-hover/cards:-translate-y-1 transition-transform duration-300">
+                            <div className="flex justify-between items-start">
+                              <span className="font-mono text-white/90 font-bold tracking-widest text-lg">VELOX</span>
+                              <Wifi className="h-5 w-5 text-white/50 rotate-90" />
+                            </div>
+                            <div className="space-y-4">
+                              <div className="font-mono text-white text-lg tracking-[0.15em] opacity-90">•••• 4242</div>
+                              <div className="flex justify-between text-xs text-white/70 font-mono">
+                                <span>ALEX MORGAN</span>
+                                <span>12/28</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <div className="mt-6 space-y-3">
-                          <div className="flex justify-between text-sm">
-                            <div className="flex items-center text-zinc-400"><div className="w-2 h-2 rounded-full bg-primary mr-2" /> Stocks</div>
+                      </div>
+
+                      {/* Row 2 */}
+                      {/* 3. Asset Allocation */}
+                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-300 hover:border-secondary/20 transition-colors">
+                        <h4 className="text-white font-bold mb-4">Asset Allocation</h4>
+                        <div className="flex items-center justify-center relative h-32">
+                          <div className="absolute inset-0 rounded-full border-[10px] border-zinc-800" />
+                          <div className="absolute inset-0 rounded-full border-[10px] border-primary border-t-transparent border-r-transparent border-l-transparent rotate-45" />
+                          <div className="absolute inset-0 rounded-full border-[10px] border-secondary border-b-transparent border-r-transparent border-l-transparent -rotate-12 opacity-80" />
+                          <div className="text-center">
+                            <p className="text-xs text-zinc-500">Total</p>
+                            <p className="text-lg font-bold text-white">100%</p>
+                          </div>
+                        </div>
+                        <div className="mt-4 space-y-2">
+                          <div className="flex justify-between text-xs">
+                            <div className="flex items-center text-zinc-400"><div className="w-1.5 h-1.5 rounded-full bg-primary mr-2" /> Stocks</div>
                             <span className="text-white">45%</span>
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <div className="flex items-center text-zinc-400"><div className="w-2 h-2 rounded-full bg-secondary mr-2" /> Crypto</div>
+                          <div className="flex justify-between text-xs">
+                            <div className="flex items-center text-zinc-400"><div className="w-1.5 h-1.5 rounded-full bg-secondary mr-2" /> Crypto</div>
                             <span className="text-white">35%</span>
                           </div>
                         </div>
                       </div>
 
-                      {/* 3. Savings Goal (Floating Card) */}
-                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-300 hover:border-accent/20 transition-colors group/goal">
-                        <div className="flex justify-between items-center mb-4">
-                          <div className="h-10 w-10 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500">
-                            <Target className="h-5 w-5" />
-                          </div>
-                          <MoreVertical className="h-4 w-4 text-zinc-600" />
-                        </div>
-                        <h4 className="text-white font-bold text-lg">Tesla Model 3</h4>
-                        <p className="text-zinc-500 text-xs mb-6">Savings Goal</p>
-                        <div className="flex justify-between items-end mb-2">
-                          <span className="text-2xl font-bold text-white">₹12,40,000</span>
-                          <span className="text-xs text-yellow-500 font-bold">62%</span>
-                        </div>
-                        <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-yellow-500 w-[62%] group-hover/goal:w-[65%] transition-all duration-700" />
-                        </div>
-                      </div>
-
-                      {/* 4. Recent Transactions (Table) */}
-                      <div className="col-span-12 md:col-span-8 rounded-2xl bg-[#111113] border border-white/5 p-0 overflow-hidden animate-slide-up delay-400 hover:border-white/10 transition-colors">
+                      {/* 4. Transactions (Table) */}
+                      <div className="col-span-12 md:col-span-8 rounded-2xl bg-[#111113] border border-white/5 p-0 overflow-hidden animate-slide-up delay-300 hover:border-white/10 transition-colors">
                         <div className="p-6 border-b border-white/5 flex justify-between items-center">
                           <h4 className="text-white font-bold">Live Transactions</h4>
                           <Button variant="ghost" size="sm" className="text-xs">View All</Button>
@@ -221,6 +236,90 @@ export default function Home() {
                             </div>
                           ))}
                         </div>
+                      </div>
+
+                      {/* Row 3 */}
+                      {/* 5. Monthly Budget (New) */}
+                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-400 hover:border-accent/20 transition-colors">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="text-white font-bold">Monthly Budget</h4>
+                          <span className="text-xs text-accent bg-accent/10 px-2 py-1 rounded">On Track</span>
+                        </div>
+                        <div className="space-y-5">
+                          <div>
+                            <div className="flex justify-between text-xs text-zinc-400 mb-1">
+                              <span>Shopping</span>
+                              <span className="text-white">75%</span>
+                            </div>
+                            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                              <div className="h-full bg-accent w-[75%]" />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between text-xs text-zinc-400 mb-1">
+                              <span>Dining</span>
+                              <span className="text-white">45%</span>
+                            </div>
+                            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                              <div className="h-full bg-primary w-[45%]" />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between text-xs text-zinc-400 mb-1">
+                              <span>Bills</span>
+                              <span className="text-white">90%</span>
+                            </div>
+                            <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                              <div className="h-full bg-yellow-500 w-[90%]" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 6. Savings Goal (Floating Card) */}
+                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-400 hover:border-yellow-500/20 transition-colors group/goal">
+                        <div className="flex justify-between items-center mb-4">
+                          <div className="h-10 w-10 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500">
+                            <Target className="h-5 w-5" />
+                          </div>
+                          <MoreVertical className="h-4 w-4 text-zinc-600" />
+                        </div>
+                        <div className="text-center py-2">
+                          <h4 className="text-white font-bold text-lg">Tesla Model 3</h4>
+                          <p className="text-zinc-500 text-xs">Target: Dec 2025</p>
+                        </div>
+                        <div className="mt-4">
+                          <div className="flex justify-between items-end mb-2">
+                            <span className="text-2xl font-bold text-white">₹12.4L</span>
+                            <span className="text-xs text-yellow-500 font-bold">62%</span>
+                          </div>
+                          <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-yellow-500 w-[62%] group-hover/goal:w-[65%] transition-all duration-700" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 7. Debt Manager (New) */}
+                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-400 hover:border-red-500/20 transition-colors">
+                        <h4 className="text-white font-bold mb-4">Debt Manager</h4>
+                        <div className="bg-red-500/5 rounded-xl p-4 border border-red-500/10 mb-3">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-red-500/10 rounded-lg text-red-500">
+                              <CreditCard className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-white">HDFC Regalia</p>
+                              <p className="text-xs text-red-400">Due in 5 days</p>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-zinc-400">Outstanding</span>
+                            <span className="text-sm font-bold text-white">₹45,230</span>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" className="w-full text-xs h-8 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                          Pay Now
+                        </Button>
                       </div>
                     </div>
                   </div>
