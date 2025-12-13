@@ -114,12 +114,12 @@ export default function Home() {
 
                   {/* Dashboard Content Grid */}
                   <div className="p-4 md:p-8 overflow-hidden h-full">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 gap-4 animate-slide-up">
-                      <div>
+                    <div className="flex flex-col md:flex-row items-center md:items-center justify-between mb-6 md:mb-8 gap-4 animate-slide-up">
+                      <div className="text-center md:text-left">
                         <h3 className="text-2xl font-bold text-white">Good Evening, Alex</h3>
                         <p className="text-zinc-400 text-sm">Here's what's happening today.</p>
                       </div>
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 w-full md:w-auto justify-center">
                         <div className="bg-zinc-900 border border-white/5 px-4 py-2 rounded-lg text-sm text-zinc-400">Oct 24, 2024</div>
                         <div className="bg-primary text-black px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
                           <Plus className="h-4 w-4" /> Add New
@@ -132,16 +132,16 @@ export default function Home() {
                       {/* 1. Net Worth Card (Large) */}
                       <div className="col-span-12 md:col-span-8 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-100 hover:border-primary/20 transition-colors group/card relative overflow-hidden">
                         <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4 md:mb-6 gap-2">
-                          <div>
+                          <div className="text-center md:text-left">
                             <p className="text-zinc-400 text-sm font-medium">Net Worth</p>
                             <h4 className="text-3xl font-bold text-white mt-1">₹84,23,500</h4>
                           </div>
-                          <div className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-medium flex items-center w-fit">
+                          <div className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-medium flex items-center w-fit mx-auto md:mx-0">
                             <TrendingUp className="h-3 w-3 mr-1" /> +12.5%
                           </div>
                         </div>
                         {/* Mock Chart Area */}
-                        <div className="h-40 md:h-48 w-full flex items-end gap-1 md:gap-2 relative">
+                        <div className="h-24 md:h-48 w-full flex items-end gap-1 md:gap-2 relative">
                           <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-50" />
                           {[30, 45, 35, 60, 50, 75, 65, 80, 70, 90, 85, 100].map((h, i) => (
                             <div key={i} className="flex-1 bg-zinc-800/50 rounded-t-sm relative group/bar overflow-hidden">
