@@ -125,21 +125,21 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-12 gap-6 h-full pb-20">
+                    <div className="grid grid-cols-12 gap-4 md:gap-6 h-full pb-20">
                       {/* Row 1 */}
                       {/* 1. Net Worth Card (Large) */}
-                      <div className="col-span-12 md:col-span-8 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-100 hover:border-primary/20 transition-colors group/card relative overflow-hidden">
-                        <div className="flex justify-between items-start mb-6">
+                      <div className="col-span-12 md:col-span-8 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-100 hover:border-primary/20 transition-colors group/card relative overflow-hidden">
+                        <div className="flex justify-between items-start mb-4 md:mb-6">
                           <div>
-                            <p className="text-zinc-400 text-sm font-medium">Net Worth</p>
-                            <h4 className="text-3xl font-bold text-white mt-1">₹84,23,500</h4>
+                            <p className="text-zinc-400 text-sm font-medium -mt-3">Net Worth</p>
                           </div>
-                          <div className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-medium flex items-center">
+                          <div><h4 className=" text-2xl md:text-3xl font-bold text-white -mt-4">₹84,23,500</h4></div>
+                          <div className="bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-medium flex items-center -mt-3">
                             <TrendingUp className="h-3 w-3 mr-1" /> +12.5%
                           </div>
                         </div>
                         {/* Mock Chart Area */}
-                        <div className="h-48 w-full flex items-end gap-2 relative">
+                        <div className="h-40 md:h-48 w-full flex items-end gap-1 md:gap-2 relative">
                           <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-50" />
                           {[30, 45, 35, 60, 50, 75, 65, 80, 70, 90, 85, 100].map((h, i) => (
                             <div key={i} className="flex-1 bg-zinc-800/50 rounded-t-sm relative group/bar overflow-hidden">
@@ -154,24 +154,24 @@ export default function Home() {
                       </div>
 
                       {/* 2. My Cards (New) - Stacked Cards Visual */}
-                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-200 hover:border-white/20 transition-colors relative overflow-hidden group/cards">
-                        <div className="flex justify-between items-start mb-6">
+                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-200 hover:border-white/20 transition-colors relative overflow-hidden group/cards">
+                        <div className="flex justify-between items-start mb-2">
                           <div>
-                            <p className="text-zinc-400 text-sm font-medium">My Cards</p>
+                            <p className="text-zinc-400 text-sm font-medium -mt-2">My Cards</p>
                           </div>
                           <Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-400 hover:text-white hover:bg-white/10"><Plus className="h-3 w-3" /></Button>
                         </div>
-                        <div className="relative h-48 mt-4 mx-2">
+                        <div className="relative h-40 md:h-48 mt-4 mx-2">
                           {/* Card 1 (Back) */}
-                          <div className="absolute top-0 w-full h-40 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/5 transform scale-95 opacity-60 translate-y-4 transition-transform group-hover/cards:translate-y-8 duration-500"></div>
+                          <div className="absolute top-0 w-full h-32 md:h-40 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/5 transform scale-95 opacity-60 translate-y-4 transition-transform group-hover/cards:translate-y-8 duration-500"></div>
                           {/* Card 2 (Middle) */}
-                          <div className="absolute top-2 w-full h-40 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#4c1d95] border border-white/10 transform scale-98 translate-y-2 group-hover/cards:translate-y-4 transition-transform duration-500 shadow-xl">
+                          <div className="absolute top-2 w-full h-32 md:h-40 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#4c1d95] border border-white/10 transform scale-98 translate-y-2 group-hover/cards:translate-y-4 transition-transform duration-500 shadow-xl">
                             <div className="p-4 flex flex-col justify-between h-full text-white/50">
                               <div className="flex justify-between"><span className="text-white font-bold tracking-widest">VELOX</span> <span className="text-xs">PLATINUM</span></div>
                             </div>
                           </div>
                           {/* Card 3 (Front - Primary) */}
-                          <div className="absolute top-4 w-full h-40 rounded-xl bg-gradient-to-br from-primary to-[#047857] border border-white/10 shadow-2xl p-5 flex flex-col justify-between group-hover/cards:-translate-y-1 transition-transform duration-300">
+                          <div className="absolute top-4 w-full h-32 md:h-40 rounded-xl bg-gradient-to-br from-primary to-[#047857] border border-white/10 shadow-2xl p-5 flex flex-col justify-between group-hover/cards:-translate-y-1 transition-transform duration-300">
                             <div className="flex justify-between items-start">
                               <span className="font-mono text-white/90 font-bold tracking-widest text-lg">VELOX</span>
                               <Wifi className="h-5 w-5 text-white/50 rotate-90" />
@@ -189,19 +189,19 @@ export default function Home() {
 
                       {/* Row 2 */}
                       {/* 3. Asset Allocation */}
-                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-300 hover:border-secondary/20 transition-colors">
+                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-300 hover:border-secondary/20 transition-colors">
                         <div className="flex justify-between items-start mb-6">
                           <div>
                             <p className="text-zinc-400 text-sm font-medium">Asset Allocation</p>
                           </div>
                         </div>
-                        <div className="flex items-center justify-center relative h-40">
-                          <div className="absolute inset-0 rounded-full border-[12px] border-zinc-800" />
-                          <div className="absolute inset-0 rounded-full border-[12px] border-primary border-t-transparent border-r-transparent border-l-transparent rotate-45 transform transition-transform hover:scale-105 duration-500" />
-                          <div className="absolute inset-0 rounded-full border-[12px] border-secondary border-b-transparent border-r-transparent border-l-transparent -rotate-12 opacity-80 transform transition-transform hover:scale-105 duration-500" />
+                        <div className="flex items-center justify-center relative h-32 md:h-40">
+                          <div className="absolute inset-0 rounded-full border-[10px] md:border-[12px] border-zinc-800" />
+                          <div className="absolute inset-0 rounded-full border-[10px] md:border-[12px] border-primary border-t-transparent border-r-transparent border-l-transparent rotate-45 transform transition-transform hover:scale-105 duration-500" />
+                          <div className="absolute inset-0 rounded-full border-[10px] md:border-[12px] border-secondary border-b-transparent border-r-transparent border-l-transparent -rotate-12 opacity-80 transform transition-transform hover:scale-105 duration-500" />
                           <div className="text-center">
                             <p className="text-xs text-zinc-500">Total</p>
-                            <p className="text-xl font-bold text-white">100%</p>
+                            <p className="text-lg md:text-xl font-bold text-white">100%</p>
                           </div>
                         </div>
                         <div className="mt-6 space-y-3">
@@ -218,7 +218,7 @@ export default function Home() {
 
                       {/* 4. Transactions (Table) */}
                       <div className="col-span-12 md:col-span-8 rounded-2xl bg-[#111113] border border-white/5 p-0 overflow-hidden animate-slide-up delay-300 hover:border-white/10 transition-colors">
-                        <div className="p-6 border-b border-white/5 flex justify-between items-start">
+                        <div className="p-4 md:p-6 border-b border-white/5 flex justify-between items-start">
                           <div>
                             <p className="text-zinc-400 text-sm font-medium">Live Transactions</p>
                           </div>
@@ -231,9 +231,9 @@ export default function Home() {
                             { name: "Starbucks", date: "1 hour ago", amount: "-₹450", icon: Coffee, color: "text-white" },
                           ].map((tx, i) => (
                             <div key={i} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-xl transition-colors group/row cursor-default">
-                              <div className="flex items-center gap-4">
-                                <div className="h-10 w-10 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-400 group-hover/row:text-primary transition-colors">
-                                  <tx.icon className="h-4 w-4" />
+                              <div className="flex items-center gap-3 md:gap-4">
+                                <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-400 group-hover/row:text-primary transition-colors">
+                                  <tx.icon className="h-3 w-3 md:h-4 md:w-4" />
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium text-white">{tx.name}</p>
@@ -248,7 +248,7 @@ export default function Home() {
 
                       {/* Row 3 */}
                       {/* 5. Monthly Budget (New) */}
-                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-400 hover:border-accent/20 transition-colors">
+                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-400 hover:border-accent/20 transition-colors">
                         <div className="flex justify-between items-start mb-6">
                           <div>
                             <p className="text-zinc-400 text-sm font-medium">Monthly Budget</p>
@@ -287,7 +287,7 @@ export default function Home() {
                       </div>
 
                       {/* 6. Savings Goal (Floating Card) */}
-                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-400 hover:border-yellow-500/20 transition-colors group/goal">
+                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-400 hover:border-yellow-500/20 transition-colors group/goal">
                         <div className="flex justify-between items-center mb-4">
                           <div className="h-10 w-10 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500">
                             <Target className="h-5 w-5" />
@@ -310,7 +310,7 @@ export default function Home() {
                       </div>
 
                       {/* 7. Debt Manager (New) */}
-                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-6 animate-slide-up delay-400 hover:border-red-500/20 transition-colors">
+                      <div className="col-span-12 md:col-span-4 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-400 hover:border-red-500/20 transition-colors">
                         <div className="flex justify-between items-start mb-6">
                           <div>
                             <p className="text-zinc-400 text-sm font-medium">Debt Manager</p>
