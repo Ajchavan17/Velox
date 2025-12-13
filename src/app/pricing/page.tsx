@@ -13,15 +13,31 @@ import {
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
+import { useAuthUI } from "@/context/AuthUIContext";
 import { useSession } from "next-auth/react";
+
+import { Modal } from "@/components/ui/Modal";
 
 export default function PricingPage() {
     const [isYearly, setIsYearly] = useState(false);
     const [isLoading, setIsLoading] = useState<'free' | 'pro' | null>(null);
+    const [comingSoonPlan, setComingSoonPlan] = useState<string | null>(null);
     const router = useRouter();
-    const { update } = useSession();
+    const { data: session, update } = useSession();
+    const { openRegister } = useAuthUI();
 
     const onSubscribe = async (plan: 'free' | 'pro') => {
+        if (plan === 'pro') {
+            setComingSoonPlan("Pro");
+            return;
+        }
+
+        if (!session) {
+            openRegister();
+            return;
+        }
+
         setIsLoading(plan);
         try {
             if (plan === 'free') {
@@ -40,38 +56,17 @@ export default function PricingPage() {
                     });
                     router.push('/pricing/confirmation?plan=free');
                 }
-            } else {
-                // Mock Stripe Checkout
-                const res = await fetch('/api/stripe/checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ plan: 'pro', isYearly }),
-                });
-
-                if (res.ok) {
-                    // In a real app, this would be the Stripe URL
-                    // For now, we simulate a successful payment redirecting to confirmation
-                    // We also need to update the user plan in DB for this mock to work
-                    await fetch('/api/user/plan', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ plan: 'pro' }),
-                    });
-
-                    await update({
-                        user: {
-                            plan: 'pro',
-                            subscriptionStatus: 'active'
-                        }
-                    });
-                    router.push('/pricing/confirmation?plan=pro');
-                }
             }
         } catch (error) {
             console.error('Subscription error:', error);
+            toast.error("Something went wrong");
         } finally {
             setIsLoading(null);
         }
+    };
+
+    const handleEnterprise = () => {
+        setComingSoonPlan("Enterprise");
     };
 
     return (
@@ -162,9 +157,9 @@ export default function PricingPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="text-4xl font-bold mb-6">
-                                    ₹{isYearly ? "999" : "1,299"}
+                                    ₹{isYearly ? "1,910" : "199"}
                                     <span className="text-lg font-normal text-muted-foreground">
-                                        /mo
+                                        /{isYearly ? "yr" : "mo"}
                                     </span>
                                 </div>
                                 <ul className="space-y-3 text-sm">
@@ -226,7 +221,7 @@ export default function PricingPage() {
                                 </ul>
                             </CardContent>
                             <CardFooter>
-                                <Button variant="outline" className="w-full">Contact Sales</Button>
+                                <Button variant="outline" className="w-full" onClick={handleEnterprise}>Contact Sales</Button>
                             </CardFooter>
                         </Card>
                     </div>
@@ -263,6 +258,32 @@ export default function PricingPage() {
                     </div>
                 </div>
             </main>
+
+            <Modal
+                isOpen={!!comingSoonPlan}
+                onClose={() => setComingSoonPlan(null)}
+                title={`${comingSoonPlan} Plan`}
+            >
+                <div className="text-center py-6">
+                    <div className="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span className="text-4xl">🚀</span>
+                    </div>
+                    <p className="text-xl font-medium mb-2">Coming Soon!</p>
+                    <p className="text-muted-foreground">
+                        We are currently putting the finishing touches on the <strong>{comingSoonPlan}</strong> plan.
+                        <br />
+                        Please check back shortly or stick with the Free plan to get started today.
+                    </p>
+                    <div className="mt-8">
+                        <Button
+                            className="w-full"
+                            onClick={() => setComingSoonPlan(null)}
+                        >
+                            Got it
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
