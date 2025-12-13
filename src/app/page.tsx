@@ -132,7 +132,7 @@ export default function Home() {
                       {/* 1. Net Worth Card (Large) */}
                       <div className="col-span-12 md:col-span-8 rounded-2xl bg-[#111113] border border-white/5 p-4 md:p-6 animate-slide-up delay-100 hover:border-primary/20 transition-colors group/card relative overflow-hidden">
                         <div className="flex flex-col md:flex-row md:justify-between items-center mb-4 md:mb-6 gap-2">
-                          <div className="flex flex-col md:flex-row items-center md:items-baseline gap-1 md:gap-3 text-center md:text-left">
+                          <div className="flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-4 text-center md:text-left">
                             <p className="text-zinc-400 text-sm font-medium">Net Worth</p>
                             <h4 className="text-3xl font-bold text-white">₹84,23,500</h4>
                           </div>
