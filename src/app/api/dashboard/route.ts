@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 import dbConnect from '@/lib/db';
 import Transaction from '@/models/Transaction';
 import User from '@/models/User';
@@ -9,20 +8,20 @@ import CreditCard from '@/models/CreditCard';
 import Debt from '@/models/Debt';
 import mongoose from 'mongoose';
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         await dbConnect();
 
-        const userId = new mongoose.Types.ObjectId(session.user.id);
+        const userId = new mongoose.Types.ObjectId(user.id);
 
         // Fetch user preferences (currency)
-        const user = await User.findById(userId).select('currency');
-        const currency = user?.currency || 'INR';
+        const dbUser = await User.findById(userId).select('currency');
+        const currency = dbUser?.currency || 'INR';
 
         // 1. Bank Accounts Total
         const bankAccounts = await BankAccount.find({ userId });

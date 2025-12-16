@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -12,9 +12,11 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/Card";
-import { Plus, Loader2, Trash2, Edit2, Filter, ArrowUpCircle, ArrowDownCircle, Landmark, CreditCard, X } from "lucide-react";
+import { Plus, Loader2, Trash2, Edit2, Filter, ArrowUpCircle, ArrowDownCircle, Landmark, CreditCard, X, TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
+import { FloatingActionButton } from "@/components/ui/FloatingActionButton";
+import { SwipeableCard } from "@/components/ui/SwipeableCard";
 
 interface Transaction {
     _id: string;
@@ -48,7 +50,9 @@ function TransactionsContent() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [accounts, setAccounts] = useState<AccountOption[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
+
+    // View State
+    const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -73,7 +77,7 @@ function TransactionsContent() {
             fetchCategories();
             fetchAccountsData();
         }
-    }, [status, filterType]);
+    }, [status]);
 
     // Handle Quick Action param
     useEffect(() => {
@@ -84,6 +88,14 @@ function TransactionsContent() {
             router.replace(`/transactions?${params.toString()}`, { scroll: false });
         }
     }, [searchParams]);
+
+    // Sync formData type with activeTab when opening form from FAB (optional, but good UX)
+    useEffect(() => {
+        if (!editingId && isAdding) {
+            setFormData(prev => ({ ...prev, type: activeTab }));
+        }
+    }, [isAdding, activeTab, editingId]);
+
 
     // Update formData.category when selected parts change
     useEffect(() => {
@@ -150,8 +162,7 @@ function TransactionsContent() {
     const fetchTransactions = async () => {
         setIsLoading(true);
         try {
-            const query = filterType !== 'all' ? `?type=${filterType}` : '';
-            const res = await fetch(`/api/transactions${query}`);
+            const res = await fetch(`/api/transactions`);
             if (res.ok) {
                 const data = await res.json();
                 setTransactions(data);
@@ -247,24 +258,31 @@ function TransactionsContent() {
     const availableCategories = categories.filter(c => c.type === formData.type);
     const availableSubcategories = availableCategories.find(c => c.name === selectedCategory)?.subcategories || [];
 
+    // Filter transactions based on active Tab (Mobile)
+    const filteredTransactions = transactions.filter(t => t.type === activeTab);
+
+    // Separate for Desktop Split View
     const incomeTransactions = transactions.filter(t => t.type === 'income');
     const expenseTransactions = transactions.filter(t => t.type === 'expense');
 
+    // Calculate Total for Summary Card (Mobile)
+    const totalAmount = filteredTransactions.reduce((acc, curr) => acc + Number(curr.amount), 0);
+
     return (
-        <div className="container mx-auto py-10 px-4 md:px-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b border-border/40 pb-8">
-                <div className="text-left">
-                    <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent w-fit">
+        <div className="container mx-auto pb-24 md:pb-10 pt-6 px-4 md:px-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Header with Title and Add Button */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent w-fit">
                         Transactions
                     </h1>
-                    <p className="text-muted-foreground mt-1 text-sm">Track your income and expenses.</p>
+                    <p className="text-muted-foreground text-xs md:text-sm mt-1">Manage your income and expenses</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="hidden md:block">
                     <Button onClick={() => {
                         setIsAdding(true);
                         setEditingId(null);
-                        setFormData({ ...formData, type: 'expense', amount: '', category: '', description: '', accountId: '' });
+                        setFormData({ ...formData, type: activeTab, amount: '', category: '', description: '', accountId: '' });
                         setSelectedCategory('');
                         setSelectedSubcategory('');
                         setSelectedAccountId('');
@@ -274,141 +292,106 @@ function TransactionsContent() {
                 </div>
             </div>
 
-            {isAdding && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <Card className="w-full max-w-lg border-primary/20 bg-background shadow-xl max-h-[90vh] overflow-y-auto">
-                        <CardHeader className="flex flex-row items-center justify-between pb-4">
-                            <CardTitle>{editingId ? 'Edit Transaction' : 'Add New Transaction'}</CardTitle>
-                            <Button variant="ghost" size="icon" onClick={() => { setIsAdding(false); setEditingId(null); }}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="p-4 sm:p-6 overflow-y-auto max-h-[75vh]">
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                {/* Row 1: Type Selection and Date */}
-                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 border-b border-border/40 pb-3">
-                                    <div className="flex gap-2 p-1 bg-muted/30 rounded-lg">
-                                        <label className={`cursor-pointer px-4 py-2 rounded-md transition-all text-sm font-medium ${formData.type === 'income' ? 'bg-emerald-100 text-emerald-700 shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}>
-                                            <input
-                                                type="radio"
-                                                name="type"
-                                                value="income"
-                                                checked={formData.type === 'income'}
-                                                onChange={(e) => {
-                                                    setFormData({ ...formData, type: 'income', category: '' });
-                                                    setSelectedCategory('');
-                                                    setSelectedSubcategory('');
-                                                }}
-                                                className="sr-only"
-                                            />
-                                            Income
-                                        </label>
-                                        <label className={`cursor-pointer px-4 py-2 rounded-md transition-all text-sm font-medium ${formData.type === 'expense' ? 'bg-red-100 text-red-700 shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}>
-                                            <input
-                                                type="radio"
-                                                name="type"
-                                                value="expense"
-                                                checked={formData.type === 'expense'}
-                                                onChange={(e) => {
-                                                    setFormData({ ...formData, type: 'expense', category: '' });
-                                                    setSelectedCategory('');
-                                                    setSelectedSubcategory('');
-                                                }}
-                                                className="sr-only"
-                                            />
-                                            Expense
-                                        </label>
-                                    </div>
-                                    <div className="space-y-2 w-full sm:w-auto min-w-0">
-                                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Date</label>
-                                        <Input
-                                            type="date"
-                                            required
-                                            className="w-full sm:w-[150px]"
-                                            value={formData.date}
-                                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Row 2: Account, Category, Subcategory */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Account</label>
-                                        <Select
-                                            value={selectedAccountId}
-                                            onChange={setSelectedAccountId}
-                                            options={[
-                                                { label: 'None (Cash)', value: '' },
-                                                ...accounts.map(acc => ({ label: acc.name, value: acc._id }))
-                                            ]}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Amount</label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-2.5 text-muted-foreground font-semibold z-10">₹</span>
-                                            <Input
-                                                type="number"
-                                                required
-                                                className="pl-7 pr-3"
-                                                placeholder="0.00"
-                                                value={formData.amount}
-                                                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Category</label>
-                                        <Select
-                                            value={selectedCategory}
-                                            onChange={(val) => {
-                                                setSelectedCategory(val);
-                                                setSelectedSubcategory('');
-                                            }}
-                                            placeholder="Select Category"
-                                            options={availableCategories.map(cat => ({ label: cat.name, value: cat.name }))}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Subcategory</label>
-                                        <Select
-                                            value={selectedSubcategory}
-                                            onChange={setSelectedSubcategory}
-                                            placeholder={availableSubcategories.length === 0 ? 'No subcategories' : 'Select Subcategory'}
-                                            disabled={!selectedCategory || availableSubcategories.length === 0}
-                                            options={availableSubcategories.map(sub => ({ label: sub, value: sub }))}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Row 4: Description */}
-                                <div className="space-y-2">
-                                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Description</label>
-                                    <Input
-                                        type="text"
-                                        required
-                                        placeholder="What was this transaction for?"
-                                        value={formData.description}
-                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    />
-                                </div>
-
-                                <div className="flex justify-end gap-3 pt-2">
-                                    <Button type="button" variant="ghost" onClick={() => { setIsAdding(false); setEditingId(null); }}>Cancel</Button>
-                                    <Button type="submit" className="min-w-[120px]">{editingId ? 'Update' : 'Save Transaction'}</Button>
-                                </div>
-                            </form>
-                        </CardContent>
-                    </Card>
+            {/* --- MOBILE VIEW (Tabs + Single List) --- */}
+            <div className="md:hidden space-y-6">
+                {/* Toggle Tabs (Segmented Control) */}
+                <div className="flex p-1 bg-muted/30 rounded-full w-full max-w-md mx-auto relative backdrop-blur-sm border border-white/5">
+                    <button
+                        onClick={() => setActiveTab('expense')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-full transition-all duration-300 relative z-10 ${activeTab === 'expense'
+                                ? 'bg-red-500/10 text-red-500 shadow-sm ring-1 ring-red-500/20'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        <ArrowDownCircle className="h-4 w-4" /> Expense
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('income')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-full transition-all duration-300 relative z-10 ${activeTab === 'income'
+                                ? 'bg-emerald-500/10 text-emerald-500 shadow-sm ring-1 ring-emerald-500/20'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        <ArrowUpCircle className="h-4 w-4" /> Income
+                    </button>
                 </div>
-            )}
 
-            {/* Transaction Columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Summary Card */}
+                <Card className="bg-gradient-to-br from-card to-muted/50 border-primary/10 shadow-sm overflow-hidden relative">
+                    <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none ${activeTab === 'income' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`} />
+                    <CardContent className="p-6 flex items-center justify-between relative z-10">
+                        <div>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total {activeTab === 'income' ? 'Received' : 'Spent'}</p>
+                            <h2 className={`text-3xl font-bold tracking-tight ${activeTab === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                ₹{totalAmount.toLocaleString()}
+                            </h2>
+                        </div>
+                        <div className={`p-3 rounded-full ${activeTab === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                            {activeTab === 'income' ? <TrendingUp className="h-6 w-6" /> : <TrendingDown className="h-6 w-6" />}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Swipeable List */}
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-sm font-medium text-muted-foreground">Recent Activity</h3>
+                        <span className="text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded-full">{filteredTransactions.length} records</span>
+                    </div>
+
+                    {isLoading ? (
+                        <div className="flex justify-center py-10">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        </div>
+                    ) : filteredTransactions.length === 0 ? (
+                        <div className="text-center py-12 border rounded-xl border-dashed bg-muted/20 text-muted-foreground">
+                            No {activeTab} records found.
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {filteredTransactions.map((t) => (
+                                <SwipeableCard // Will fix import in tool logic or manual
+                                    key={t._id}
+                                    onEdit={() => handleEdit(t)}
+                                    onDelete={() => handleDelete(t._id)}
+                                    className="rounded-xl"
+                                >
+                                    <Card
+                                        className="group relative overflow-hidden border-l-4 transition-all duration-300 hover:shadow-md hover:translate-x-1 active:scale-[0.99] rounded-xl"
+                                        style={{ borderLeftColor: t.type === 'income' ? '#10b981' : '#ef4444' }}
+                                    >
+                                        <CardContent className="p-4 flex items-center justify-between">
+                                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                <div className={`p-2.5 rounded-xl flex-shrink-0 ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                    {t.type === 'income' ? <ArrowUpCircle className="h-5 w-5" /> : <ArrowDownCircle className="h-5 w-5" />}
+                                                </div>
+
+                                                <div className="min-w-0">
+                                                    <p className="font-semibold text-foreground truncate">{t.description}</p>
+                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                                                        <span className="bg-muted/50 px-1.5 py-0.5 rounded capitalize">{t.category}</span>
+                                                        <span>•</span>
+                                                        <span>{format(new Date(t.date), 'MMM d')}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="text-right pl-3">
+                                                <p className={`font-bold text-base ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                                    {t.type === 'income' ? '+' : '-'}₹{Number(t.amount).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </SwipeableCard>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* --- DESKTOP VIEW (Split Columns) --- */}
+            <div className="hidden md:grid grid-cols-2 gap-8">
                 {/* Income Column */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between pb-2 border-b border-border/50">
@@ -419,47 +402,27 @@ function TransactionsContent() {
                             {incomeTransactions.length} transactions
                         </span>
                     </div>
-
                     <div className="space-y-3">
-                        {isLoading ? (
-                            <div className="text-center py-8 text-muted-foreground">Loading...</div>
-                        ) : incomeTransactions.length === 0 ? (
-                            <div className="text-center py-12 border rounded-xl border-dashed bg-muted/20 text-muted-foreground">
-                                No income records found.
-                            </div>
-                        ) : (
-                            incomeTransactions.map((transaction) => (
-                                <Card key={transaction._id} className="group hover:border-emerald-500/30 transition-all duration-300 hover:shadow-sm">
-                                    <CardContent className="p-4 flex items-center justify-between">
-                                        <div className="flex-1 min-w-0 mr-4">
-                                            <p className="font-semibold truncate" title={transaction.description}>{transaction.description}</p>
-                                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                                <span className="text-[10px] uppercase font-medium tracking-wide text-muted-foreground">
-                                                    {transaction.category}
-                                                </span>
-                                                <span>• {format(new Date(transaction.date), 'MMM d, yyyy')}</span>
-                                            </p>
+                        {incomeTransactions.map((t) => (
+                            <Card key={t._id} className="group hover:border-emerald-500/30 transition-all duration-300 hover:shadow-sm">
+                                <CardContent className="p-4 flex items-center justify-between">
+                                    <div className="flex-1 min-w-0 mr-4">
+                                        <p className="font-semibold truncate">{t.description}</p>
+                                        <p className="text-xs text-muted-foreground">{t.category} • {format(new Date(t.date), 'MMM d, yyyy')}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <p className="font-bold text-emerald-600">+₹{Number(t.amount).toLocaleString()}</p>
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(t)}><Edit2 className="h-3.5 w-3.5" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(t._id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                                         </div>
-                                        <div className="flex items-center gap-3 ml-auto">
-                                            <p className="font-bold text-emerald-600 whitespace-nowrap">
-                                                +₹{Number(transaction.amount).toLocaleString()}
-                                            </p>
-                                            <div className="hidden group-hover:flex gap-1 transition-all">
-                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(transaction)}>
-                                                    <Edit2 className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(transaction._id)}>
-                                                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))
-                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                        {incomeTransactions.length === 0 && <div className="text-center py-8 text-muted-foreground">No income recorded.</div>}
                     </div>
                 </div>
-
                 {/* Expense Column */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between pb-2 border-b border-border/50">
@@ -470,47 +433,159 @@ function TransactionsContent() {
                             {expenseTransactions.length} transactions
                         </span>
                     </div>
-
                     <div className="space-y-3">
-                        {isLoading ? (
-                            <div className="text-center py-8 text-muted-foreground">Loading...</div>
-                        ) : expenseTransactions.length === 0 ? (
-                            <div className="text-center py-12 border rounded-xl border-dashed bg-muted/20 text-muted-foreground">
-                                No expense records found.
-                            </div>
-                        ) : (
-                            expenseTransactions.map((transaction) => (
-                                <Card key={transaction._id} className="group hover:border-red-500/30 transition-all duration-300 hover:shadow-sm">
-                                    <CardContent className="p-4 flex items-center justify-between">
-                                        <div className="flex-1 min-w-0 mr-4">
-                                            <p className="font-semibold truncate" title={transaction.description}>{transaction.description}</p>
-                                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                                <span className="text-[10px] uppercase font-medium tracking-wide text-muted-foreground">
-                                                    {transaction.category}
-                                                </span>
-                                                <span>• {format(new Date(transaction.date), 'MMM d, yyyy')}</span>
-                                            </p>
+                        {expenseTransactions.map((t) => (
+                            <Card key={t._id} className="group hover:border-red-500/30 transition-all duration-300 hover:shadow-sm">
+                                <CardContent className="p-4 flex items-center justify-between">
+                                    <div className="flex-1 min-w-0 mr-4">
+                                        <p className="font-semibold truncate">{t.description}</p>
+                                        <p className="text-xs text-muted-foreground">{t.category} • {format(new Date(t.date), 'MMM d, yyyy')}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <p className="font-bold text-red-600">-₹{Number(t.amount).toLocaleString()}</p>
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(t)}><Edit2 className="h-3.5 w-3.5" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(t._id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                                         </div>
-                                        <div className="flex items-center gap-3 ml-auto">
-                                            <p className="font-bold text-red-600 whitespace-nowrap">
-                                                -₹{Number(transaction.amount).toLocaleString()}
-                                            </p>
-                                            <div className="hidden group-hover:flex gap-1 transition-all">
-                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(transaction)}>
-                                                    <Edit2 className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDelete(transaction._id)}>
-                                                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))
-                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                        {expenseTransactions.length === 0 && <div className="text-center py-8 text-muted-foreground">No expenses recorded.</div>}
                     </div>
                 </div>
             </div>
+
+            {/* Floating Action Button (Mobile) */}
+            <FloatingActionButton onClick={() => {
+                setIsAdding(true);
+                setEditingId(null);
+                setFormData({ ...formData, type: activeTab, amount: '', category: '', description: '', accountId: '' });
+                setSelectedCategory('');
+                setSelectedSubcategory('');
+                setSelectedAccountId('');
+            }} />
+
+            {/* Modal Form */}
+            {isAdding && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <Card className="w-full max-w-lg border-primary/20 bg-background shadow-2xl max-h-[90vh] overflow-y-auto ring-1 ring-white/10">
+                        <CardHeader className="flex flex-row items-center justify-between pb-4 sticky top-0 bg-background/95 backdrop-blur z-10 border-b border-white/5">
+                            <CardTitle>{editingId ? 'Edit Transaction' : 'Add New Transaction'}</CardTitle>
+                            <Button variant="ghost" size="icon" onClick={() => { setIsAdding(false); setEditingId(null); }} className="h-8 w-8 rounded-full">
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="p-4 sm:p-6 overflow-y-auto max-h-[75vh]">
+                            <form onSubmit={handleSubmit} className="space-y-5">
+                                {/* Type Toggle */}
+                                <div className="grid grid-cols-2 gap-2 p-1 bg-muted/50 rounded-lg">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, type: 'expense' })}
+                                        className={`py-2 text-sm font-medium rounded-md transition-all ${formData.type === 'expense' ? 'bg-background shadow-sm text-red-500' : 'text-muted-foreground hover:text-primary'}`}
+                                    >
+                                        Expense
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, type: 'income' })}
+                                        className={`py-2 text-sm font-medium rounded-md transition-all ${formData.type === 'income' ? 'bg-background shadow-sm text-emerald-500' : 'text-muted-foreground hover:text-primary'}`}
+                                    >
+                                        Income
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Amount</label>
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-muted-foreground">₹</span>
+                                            <Input
+                                                type="number"
+                                                required
+                                                className="pl-8 text-lg font-bold h-12 bg-muted/20"
+                                                placeholder="0.00"
+                                                value={formData.amount}
+                                                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                                                autoFocus={!editingId}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Description</label>
+                                        <Input
+                                            type="text"
+                                            required
+                                            placeholder="What is this for?"
+                                            value={formData.description}
+                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            className="bg-muted/20"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Category</label>
+                                            <Select
+                                                value={selectedCategory}
+                                                onChange={(val) => {
+                                                    setSelectedCategory(val);
+                                                    setSelectedSubcategory('');
+                                                }}
+                                                placeholder="Select"
+                                                options={availableCategories.map(cat => ({ label: cat.name, value: cat.name }))}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Subcategory</label>
+                                            <Select
+                                                value={selectedSubcategory}
+                                                onChange={setSelectedSubcategory}
+                                                placeholder="Select"
+                                                disabled={!selectedCategory || availableSubcategories.length === 0}
+                                                options={availableSubcategories.map(sub => ({ label: sub, value: sub }))}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Account</label>
+                                            <Select
+                                                value={selectedAccountId}
+                                                onChange={setSelectedAccountId}
+                                                placeholder="Cash"
+                                                options={[
+                                                    { label: 'None (Cash)', value: '' },
+                                                    ...accounts.map(acc => ({ label: acc.name, value: acc._id }))
+                                                ]}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Date</label>
+                                            <Input
+                                                type="date"
+                                                required
+                                                value={formData.date}
+                                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                                className="bg-muted/20"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4">
+                                    <Button type="submit" className="w-full text-base py-6 shadow-lg shadow-primary/20">
+                                        {editingId ? 'Update Transaction' : 'Save Transaction'}
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }

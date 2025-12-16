@@ -9,18 +9,20 @@ interface DebtTileProps {
 
 export const DebtTile = ({ receivable, payable, net }: DebtTileProps) => {
     return (
-        <Card className="h-full border-l-4 border-l-orange-500">
-            <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Debt Position</h3>
-                    <WalletCards className="h-4 w-4 text-orange-500" />
+        <Card className="h-full border-l-4 border-l-orange-500 shadow-none bg-card/50 backdrop-blur-sm">
+            <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between mb-2 md:mb-4">
+                    <h3 className="text-[10px] md:text-sm font-medium text-muted-foreground uppercase tracking-wide">Net Debt Position</h3>
+                    <ArrowUpRight className="h-4 w-4 text-orange-500" />
                 </div>
 
-                <div className="mb-4">
-                    <p className={`text-3xl font-bold ${net > 0 ? 'text-emerald-500' : net < 0 ? 'text-red-500' : 'text-foreground'}`}>
-                        {net > 0 ? '+' : net < 0 ? '-' : ''}₹{Math.abs(net).toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">Net Value</p>
+                <div className="mb-2 md:mb-4">
+                    <div className="flex items-baseline justify-between">
+                        <p className={`text-xl md:text-3xl font-bold ${net > 0 ? 'text-emerald-500' : net < 0 ? 'text-red-500' : 'text-foreground'}`}>
+                            {net > 0 ? '+' : net < 0 ? '-' : ''}₹{Math.abs(net).toLocaleString()}
+                        </p>
+                        <p className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide md:mt-1">Net Position</p>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 pt-4 border-t border-border/50">

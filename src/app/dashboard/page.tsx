@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { BurnChart } from "@/components/dashboard/BurnChart";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
-import { Loader2, TrendingUp, TrendingDown, Wallet, CreditCard } from "lucide-react";
+import { Loader2, TrendingUp, TrendingDown, Wallet, CreditCard, Landmark } from "lucide-react";
 import { AccountsGrid } from "@/components/dashboard/AccountsGrid";
 import { DebtTile } from "@/components/dashboard/DebtTile";
 import { CategoryChart } from "@/components/dashboard/CategoryChart";
@@ -57,48 +57,66 @@ export default function DashboardPage() {
                 </div>
 
                 {/* 1. High Level Stats Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
                     {/* Liquid Cash */}
-                    <Card className="h-full border-l-4 border-l-primary">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Total Liquidity</h3>
-                                <Wallet className="h-4 w-4 text-primary" />
+                    <Card className="col-span-1 border-l-4 border-l-primary shadow-none bg-card/50 backdrop-blur-sm">
+                        <CardContent className="p-4 md:p-6">
+                            <div className="flex items-start justify-between mb-2">
+                                <h3 className="text-[10px] md:text-sm font-medium text-muted-foreground uppercase tracking-wide leading-tight">Total Liquidity</h3>
+                                <Wallet className="h-4 w-4 text-primary shrink-0 ml-1" />
                             </div>
-                            <div>
-                                <p className={`text-3xl font-bold ${(stats?.totalLiquidity || 0) > 0 ? "text-emerald-500" :
+                            <div className="space-y-1">
+                                <p className={`text-xl md:text-3xl font-bold truncate ${(stats?.totalLiquidity || 0) > 0 ? "text-emerald-500" :
                                     (stats?.totalLiquidity || 0) < 0 ? "text-red-500" : "text-foreground"
                                     }`}>
                                     ₹{(stats?.totalLiquidity || 0).toLocaleString()}
                                 </p>
-                                <p className="text-xs text-muted-foreground mt-1">Across all bank accounts</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground truncate">Across all accounts</p>
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Credit Debt */}
-                    <Card className="h-full border-l-4 border-l-red-500">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Credit Card Debt</h3>
-                                <CreditCard className="h-4 w-4 text-red-500" />
+                    <Card className="col-span-1 border-l-4 border-l-red-500 shadow-none bg-card/50 backdrop-blur-sm">
+                        <CardContent className="p-4 md:p-6">
+                            <div className="flex items-start justify-between mb-2">
+                                <h3 className="text-[10px] md:text-sm font-medium text-muted-foreground uppercase tracking-wide leading-tight">Credit Card Debt</h3>
+                                <CreditCard className="h-4 w-4 text-red-500 shrink-0 ml-1" />
                             </div>
-                            <div>
-                                <p className={`text-3xl font-bold ${(stats?.totalCreditDebt || 0) > 0 ? "text-red-500" : "text-foreground"
+                            <div className="space-y-1">
+                                <p className={`text-xl md:text-3xl font-bold truncate ${(stats?.totalCreditDebt || 0) > 0 ? "text-red-500" : "text-foreground"
                                     }`}>
                                     ₹{(stats?.totalCreditDebt || 0).toLocaleString()}
                                 </p>
-                                <p className="text-xs text-muted-foreground mt-1">Total outstanding due</p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground truncate">Total outstanding</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Loans & EMIs - Desktop Only */}
+                    <Card className="hidden md:flex flex-col justify-between col-span-1 border-l-4 border-l-blue-500 shadow-none bg-card/50 backdrop-blur-sm">
+                        <CardContent className="p-4 md:p-6">
+                            <div className="flex items-start justify-between mb-2">
+                                <h3 className="text-[10px] md:text-sm font-medium text-muted-foreground uppercase tracking-wide leading-tight">Active Loans</h3>
+                                <Landmark className="h-4 w-4 text-blue-500 shrink-0 ml-1" />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-xl md:text-3xl font-bold text-foreground">
+                                    ₹0
+                                </p>
+                                <p className="text-[10px] md:text-xs text-muted-foreground truncate">No active EMIs</p>
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Net Debt Position */}
-                    <DebtTile
-                        receivable={stats?.totalReceivable || 0}
-                        payable={stats?.totalPayable || 0}
-                        net={stats?.netDebtPosition || 0}
-                    />
+                    <div className="col-span-2 md:col-span-1">
+                        <DebtTile
+                            receivable={stats?.totalReceivable || 0}
+                            payable={stats?.totalPayable || 0}
+                            net={stats?.netDebtPosition || 0}
+                        />
+                    </div>
                 </div>
 
                 {/* 2. Accounts Grid (Carousel) */}

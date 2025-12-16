@@ -1,30 +1,31 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 import dbConnect from '@/lib/db';
 import BankAccount from '@/models/BankAccount';
 
-export async function GET() {
+import mongoose from 'mongoose';
+
+export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         await dbConnect();
-        const accounts = await BankAccount.find({ userId: session.user.id }).sort({ createdAt: -1 });
+        const accounts = await BankAccount.find({ userId: new mongoose.Types.ObjectId(user.id) }).sort({ createdAt: -1 });
 
         return NextResponse.json(accounts);
     } catch (error) {
         console.error('Error fetching accounts:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: `Internal Server Error: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
     }
 }
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
 
         await dbConnect();
         const newAccount = await BankAccount.create({
-            userId: session.user.id,
+            userId: user.id,
             bankName,
             accountType,
             accountName,
@@ -53,8 +54,8 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -68,7 +69,7 @@ export async function DELETE(req: Request) {
         await dbConnect();
         const deletedAccount = await BankAccount.findOneAndDelete({
             _id: id,
-            userId: session.user.id,
+            userId: user.id,
         });
 
         if (!deletedAccount) {

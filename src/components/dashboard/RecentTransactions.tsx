@@ -29,12 +29,13 @@ export const RecentTransactions = ({ transactions, currency = 'INR' }: RecentTra
 
     return (
         <Card className="glass-card border-primary/20 h-full">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                    <Link href="/transactions" className="hover:text-primary transition-colors cursor-pointer">
-                        Recent Activity
-                    </Link>
+                    Recent Activity
                 </CardTitle>
+                <Link href="/transactions" className="text-xs text-primary hover:text-primary/80 transition-colors font-medium">
+                    View All
+                </Link>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">

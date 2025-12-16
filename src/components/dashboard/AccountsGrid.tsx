@@ -34,7 +34,7 @@ export const AccountsGrid = ({ accounts = [], cards = [], currency }: AccountsGr
                     <Wallet className="h-5 w-5 text-primary" /> Accounts & Cards
                 </h3>
                 {/* Horizontal Scroll Container */}
-                <div className="flex gap-4 overflow-x-auto pb-4 px-1 scrollbar-hide -mx-1 snap-x">
+                <div className="flex gap-4 overflow-x-auto pb-4 px-1 no-scrollbar -mx-1 snap-x">
 
                     {/* Bank Accounts */}
                     {accounts.map((acc) => (
