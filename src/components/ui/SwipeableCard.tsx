@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { Trash2, Edit2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface SwipeableCardProps {
     children: React.ReactNode;
@@ -61,9 +62,9 @@ export const SwipeableCard = ({ children, onEdit, onDelete, className = "" }: Sw
     };
 
     return (
-        <div className={`relative overflow-hidden ${className}`}>
-            {/* Actions Background */}
-            <div className="absolute inset-y-0 right-0 flex items-center justify-end z-0 pr-4 gap-3 w-[150px]">
+        <div className={`relative overflow-hidden md:overflow-visible ${className}`}>
+            {/* Actions Background - Hidden on Desktop */}
+            <div className="absolute inset-y-0 right-0 flex items-center justify-end z-0 pr-4 gap-3 w-[150px] md:hidden">
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -86,9 +87,9 @@ export const SwipeableCard = ({ children, onEdit, onDelete, className = "" }: Sw
                 </button>
             </div>
 
-            {/* Foreground Content */}
+            {/* Foreground Content - Transparent on Desktop */}
             <div
-                className="relative z-10 bg-card transition-transform duration-200 ease-out"
+                className="relative z-10 bg-card transition-transform duration-200 ease-out md:bg-transparent md:transform-none select-none md:select-auto"
                 style={{ transform: `translateX(${offset}px)` }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}

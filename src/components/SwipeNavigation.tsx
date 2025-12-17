@@ -26,8 +26,8 @@ export default function SwipeNavigation() {
             if (!touchStart.current || !touchEnd.current) return;
 
             const distance = touchStart.current - touchEnd.current;
-            const isLeftSwipe = distance > 50;
-            const isRightSwipe = distance < -50;
+            const isLeftSwipe = distance > 120;
+            const isRightSwipe = distance < -120;
 
             if (isLeftSwipe || isRightSwipe) {
                 const currentIndex = navOrder.indexOf(pathname || '');

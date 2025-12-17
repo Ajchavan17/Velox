@@ -93,8 +93,8 @@ export default function DashboardPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Loans & EMIs - Desktop Only */}
-                    <Card className="hidden md:flex flex-col justify-between col-span-1 border-l-4 border-l-blue-500 shadow-none bg-card/50 backdrop-blur-sm">
+                    {/* Loans & EMIs - Desktop Only -> Now Mobile too */}
+                    <Card className="flex flex-col justify-between col-span-1 border-l-4 border-l-blue-500 shadow-none bg-card/50 backdrop-blur-sm">
                         <CardContent className="p-4 md:p-6">
                             <div className="flex items-start justify-between mb-2">
                                 <h3 className="text-[10px] md:text-sm font-medium text-muted-foreground uppercase tracking-wide leading-tight">Active Loans</h3>

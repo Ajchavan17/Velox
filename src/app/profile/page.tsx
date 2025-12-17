@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import Link from "next/link";
 import { SwipeableCard } from "@/components/ui/SwipeableCard";
+import toast from "react-hot-toast";
 
 interface BankAccount {
     _id: string;
@@ -56,6 +57,8 @@ export default function ProfilePage() {
     const [activeForm, setActiveForm] = useState<'account' | 'card' | 'category' | null>(null);
 
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
+    const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
 
     // Form States
     const [newAccount, setNewAccount] = useState({
@@ -164,9 +167,11 @@ export default function ProfilePage() {
                 await fetchAccounts();
                 setActiveForm(null);
                 setNewAccount({ bankName: '', accountType: 'Checking', accountName: '', balance: '' });
+                toast.success("Bank account added successfully");
             }
         } catch (error) {
             console.error('Error adding account:', error);
+            toast.error("Failed to add bank account");
         }
     };
 
@@ -182,9 +187,11 @@ export default function ProfilePage() {
                 await fetchCards();
                 setActiveForm(null);
                 setNewCard({ bankName: '', cardName: '', last4Digits: '', creditLimit: '', currentBalance: '' });
+                toast.success("Credit card added successfully");
             }
         } catch (error) {
             console.error('Error adding card:', error);
+            toast.error("Failed to add credit card");
         }
     };
 
@@ -206,9 +213,11 @@ export default function ProfilePage() {
                 await fetchCategories();
                 setActiveForm(null);
                 setNewCategory({ name: '', type: 'expense', subcategories: '' });
+                toast.success("Category added successfully");
             }
         } catch (error) {
             console.error('Error adding category:', error);
+            toast.error("Failed to add category");
         }
     };
 
@@ -226,14 +235,68 @@ export default function ProfilePage() {
             const res = await fetch(endpoint, { method: 'DELETE' });
 
             if (res.ok) {
-                if (deletingItem.type === 'account') await fetchAccounts();
-                else if (deletingItem.type === 'card') await fetchCards();
-                else if (deletingItem.type === 'category') await fetchCategories();
+                if (deletingItem.type === 'account') {
+                    await fetchAccounts();
+                    toast.success("Account deleted successfully");
+                }
+                else if (deletingItem.type === 'card') {
+                    await fetchCards();
+                    toast.success("Card deleted successfully");
+                }
+                else if (deletingItem.type === 'category') {
+                    await fetchCategories();
+                    toast.success("Category deleted successfully");
+                }
             }
         } catch (error) {
             console.error('Error deleting item:', error);
+            toast.error("Failed to delete item");
         } finally {
             setDeletingItem(null);
+        }
+    };
+
+    const handleUpdateAccount = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingAccount) return;
+
+        try {
+            const res = await fetch('/api/accounts', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editingAccount),
+            });
+
+            if (res.ok) {
+                await fetchAccounts();
+                setEditingAccount(null);
+                toast.success("Account updated successfully");
+            }
+        } catch (error) {
+            console.error('Error updating account:', error);
+            toast.error("Failed to update account");
+        }
+    };
+
+    const handleUpdateCard = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingCard) return;
+
+        try {
+            const res = await fetch('/api/cards', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editingCard),
+            });
+
+            if (res.ok) {
+                await fetchCards();
+                setEditingCard(null);
+                toast.success("Card updated successfully");
+            }
+        } catch (error) {
+            console.error('Error updating card:', error);
+            toast.error("Failed to update card");
         }
     };
 
@@ -289,14 +352,7 @@ export default function ProfilePage() {
                         </div>
                     </div>
 
-                    {/* Desktop Settings Icon */}
-                    <div className="hidden md:block">
-                        <Link href="/settings">
-                            <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary">
-                                <Settings className="h-5 w-5" />
-                            </Button>
-                        </Link>
-                    </div>
+
                 </div>
             </div>
 
@@ -309,12 +365,11 @@ export default function ProfilePage() {
                         </h2>
                         <Button
                             variant={activeForm === 'account' ? "secondary" : "outline"}
-                            size="sm"
+                            size="icon"
                             onClick={() => setActiveForm(activeForm === 'account' ? null : 'account')}
-                            className={`transition-all ${activeForm === 'account' ? 'bg-secondary' : ''} md:px-4 md:py-2 h-8 w-8 md:h-9 md:w-auto rounded-full md:rounded-md p-0 flex items-center justify-center`}
+                            className={`transition-all ${activeForm === 'account' ? 'bg-secondary' : ''} h-7 w-7 md:h-9 md:w-9 rounded-full flex items-center justify-center`}
                         >
-                            <Plus className={`h-4 w-4 md:mr-2 transition-transform duration-300 ${activeForm === 'account' ? 'rotate-45' : ''}`} />
-                            <span className="hidden md:inline">{activeForm === 'account' ? 'Cancel' : 'Add'}</span>
+                            <Plus className={`h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 ${activeForm === 'account' ? 'rotate-45' : ''}`} />
                         </Button>
                     </div>
 
@@ -397,40 +452,48 @@ export default function ProfilePage() {
                             accounts.map((account) => (
                                 <SwipeableCard
                                     key={account._id}
-                                    onEdit={() => { }}
+                                    onEdit={() => setEditingAccount(account)}
                                     onDelete={() => setDeletingItem({ type: 'account', id: account._id })}
-                                    className="rounded-xl"
+                                    className="rounded-xl group"
                                 >
-                                    <Card className="group hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 relative overflow-hidden border-border/60">
-                                        <CardContent className="p-4 md:p-6 flex items-center justify-between">
-                                            <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
-                                                <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform duration-300 shrink-0">
-                                                    <Landmark className="h-5 w-5 md:h-6 md:w-6" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-semibold text-base md:text-lg truncate">{account.bankName}</p>
-                                                    <p className="text-xs md:text-sm text-muted-foreground truncate">{account.accountName} • {account.accountType}</p>
-                                                </div>
+                                    <div className="flex items-center justify-between p-4 border border-border/60 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                                <Wallet className="h-5 w-5" />
                                             </div>
-                                            <div className="flex items-center gap-2 md:gap-4 pl-2">
-                                                <div className="text-right">
-                                                    <p className="font-bold text-base md:text-lg">₹{account.balance.toLocaleString()}</p>
-                                                    <p className="text-[10px] md:text-xs text-muted-foreground">Available</p>
-                                                </div>
-                                                {/* Desktop Hover Action only */}
-                                                <div className="hidden md:flex opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                                        onClick={(e) => { e.stopPropagation(); setDeletingItem({ type: 'account', id: account._id }); }}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
+                                            <div className="space-y-1">
+                                                <p className="font-medium leading-none">{account.bankName}</p>
+                                                <p className="text-sm text-muted-foreground">{account.accountName} • {account.accountType}</p>
                                             </div>
-                                        </CardContent>
-                                    </Card>
+                                        </div>
+                                        <div className="flex items-center gap-2 md:gap-4 pl-2">
+                                            <div className="text-right transition-transform duration-300 group-hover:-translate-x-24">
+                                                <p className={`font-bold md:text-2xl ${account.balance > 0 ? 'text-emerald-500' : account.balance < 0 ? 'text-red-500' : 'text-foreground'}`}>
+                                                    ₹{account.balance.toLocaleString()}
+                                                </p>
+                                                <p className="text-[10px] md:text-xs text-muted-foreground">Available</p>
+                                            </div>
+                                            {/* Desktop Hover Action only */}
+                                            <div className="hidden md:flex items-center gap-1 absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+                                                    onClick={(e) => { e.stopPropagation(); setEditingAccount(account); }}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-9 w-9 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-full"
+                                                    onClick={(e) => { e.stopPropagation(); setDeletingItem({ type: 'account', id: account._id }); }}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </SwipeableCard>
                             ))
                         )}
@@ -445,12 +508,11 @@ export default function ProfilePage() {
                         </h2>
                         <Button
                             variant={activeForm === 'card' ? "secondary" : "outline"}
-                            size="sm"
+                            size="icon"
                             onClick={() => setActiveForm(activeForm === 'card' ? null : 'card')}
-                            className={`transition-all ${activeForm === 'card' ? 'bg-secondary' : ''} md:px-4 md:py-2 h-8 w-8 md:h-9 md:w-auto rounded-full md:rounded-md p-0 flex items-center justify-center`}
+                            className={`transition-all ${activeForm === 'card' ? 'bg-secondary' : ''} h-7 w-7 md:h-9 md:w-9 rounded-full flex items-center justify-center`}
                         >
-                            <Plus className={`h-4 w-4 md:mr-2 transition-transform duration-300 ${activeForm === 'card' ? 'rotate-45' : ''}`} />
-                            <span className="hidden md:inline">{activeForm === 'card' ? 'Cancel' : 'Add'}</span>
+                            <Plus className={`h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 ${activeForm === 'card' ? 'rotate-45' : ''}`} />
                         </Button>
                     </div>
 
@@ -543,40 +605,46 @@ export default function ProfilePage() {
                             cards.map((card) => (
                                 <SwipeableCard
                                     key={card._id}
-                                    onEdit={() => { }}
+                                    onEdit={() => setEditingCard(card)}
                                     onDelete={() => setDeletingItem({ type: 'card', id: card._id })}
-                                    className="rounded-xl"
+                                    className="rounded-xl group"
                                 >
-                                    <Card className="group hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 relative overflow-hidden border-border/60">
-                                        <CardContent className="p-4 md:p-6 flex items-center justify-between">
-                                            <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
-                                                <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform duration-300 shrink-0">
-                                                    <CreditCardIcon className="h-5 w-5 md:h-6 md:w-6" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-semibold text-base md:text-lg truncate">{card.bankName} {card.cardName}</p>
-                                                    <p className="text-xs md:text-sm text-muted-foreground truncate">•••• {card.last4Digits}</p>
-                                                </div>
+                                    <div className="flex items-center justify-between p-4 border border-border/60 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center text-accent">
+                                                <CreditCardIcon className="h-5 w-5" />
                                             </div>
-                                            <div className="flex items-center gap-2 md:gap-4 pl-2">
-                                                <div className="text-right">
-                                                    <p className="font-bold text-base md:text-lg text-red-500">₹{card.currentBalance.toLocaleString()}</p>
-                                                    <p className="text-[10px] md:text-xs text-muted-foreground">Limit: ₹{card.creditLimit.toLocaleString()}</p>
-                                                </div>
-                                                {/* Desktop Hover Action only */}
-                                                <div className="hidden md:flex opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                                                        onClick={(e) => { e.stopPropagation(); setDeletingItem({ type: 'card', id: card._id }); }}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
+                                            <div className="space-y-1">
+                                                <p className="font-medium leading-none">{card.bankName}</p>
+                                                <p className="text-sm text-muted-foreground">{card.cardName} • ••• {card.last4Digits}</p>
                                             </div>
-                                        </CardContent>
-                                    </Card>
+                                        </div>
+                                        <div className="flex items-center gap-2 md:gap-4 pl-2">
+                                            <div className="text-right transition-transform duration-300 group-hover:-translate-x-24">
+                                                <p className="font-bold md:text-lg">₹{card.currentBalance.toLocaleString()}</p>
+                                                <p className="text-[10px] md:text-xs text-muted-foreground">Used / ₹{card.creditLimit.toLocaleString()}</p>
+                                            </div>
+                                            {/* Desktop Hover Action only */}
+                                            <div className="hidden md:flex items-center gap-1 absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+                                                    onClick={(e) => { e.stopPropagation(); setEditingCard(card); }}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-9 w-9 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-full"
+                                                    onClick={(e) => { e.stopPropagation(); setDeletingItem({ type: 'card', id: card._id }); }}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </SwipeableCard>
                             ))
                         )}
@@ -594,12 +662,11 @@ export default function ProfilePage() {
                     </h2>
                     <Button
                         variant={activeForm === 'category' ? "secondary" : "outline"}
-                        size="sm"
+                        size="icon"
                         onClick={() => setActiveForm(activeForm === 'category' ? null : 'category')}
-                        className={`transition-all ${activeForm === 'category' ? 'bg-secondary' : ''} md:px-4 md:py-2 h-8 w-8 md:h-9 md:w-auto rounded-full md:rounded-md p-0 flex items-center justify-center`}
+                        className={`transition-all ${activeForm === 'category' ? 'bg-secondary' : ''} h-7 w-7 md:h-9 md:w-9 rounded-full flex items-center justify-center`}
                     >
-                        <Plus className={`h-4 w-4 md:mr-2 transition-transform duration-300 ${activeForm === 'category' ? 'rotate-45' : ''}`} />
-                        <span className="hidden md:inline">{activeForm === 'category' ? 'Cancel' : 'Add'}</span>
+                        <Plus className={`h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 ${activeForm === 'category' ? 'rotate-45' : ''}`} />
                     </Button>
                 </div>
 
@@ -819,6 +886,144 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="flex justify-end gap-3 pt-4">
                                     <Button type="button" variant="outline" onClick={() => setEditingCategory(null)}>
+                                        Cancel
+                                    </Button>
+                                    <Button type="submit">
+                                        Save Changes
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
+            {/* Edit Account Dialog */}
+            {editingAccount && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <Card className="w-full max-w-lg mx-4 animate-in zoom-in-95 duration-200 border-primary/20 shadow-2xl">
+                        <CardHeader>
+                            <CardTitle>Edit Account</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleUpdateAccount} className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Bank Name</label>
+                                        <Input
+                                            type="text"
+                                            required
+                                            value={editingAccount.bankName}
+                                            onChange={(e) => setEditingAccount({ ...editingAccount, bankName: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Account Name</label>
+                                        <Input
+                                            type="text"
+                                            required
+                                            value={editingAccount.accountName}
+                                            onChange={(e) => setEditingAccount({ ...editingAccount, accountName: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Type</label>
+                                        <Select
+                                            value={editingAccount.accountType}
+                                            onChange={(val) => setEditingAccount({ ...editingAccount, accountType: val })}
+                                            options={[
+                                                { label: 'Checking', value: 'Checking' },
+                                                { label: 'Savings', value: 'Savings' },
+                                                { label: 'Investment', value: 'Investment' },
+                                                { label: 'Other', value: 'Other' },
+                                            ]}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Balance (₹)</label>
+                                        <Input
+                                            type="number"
+                                            value={editingAccount.balance}
+                                            onChange={(e) => setEditingAccount({ ...editingAccount, balance: parseFloat(e.target.value) || 0 })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <Button type="button" variant="outline" onClick={() => setEditingAccount(null)}>
+                                        Cancel
+                                    </Button>
+                                    <Button type="submit">
+                                        Save Changes
+                                    </Button>
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
+            {/* Edit Card Dialog */}
+            {editingCard && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <Card className="w-full max-w-lg mx-4 animate-in zoom-in-95 duration-200 border-primary/20 shadow-2xl">
+                        <CardHeader>
+                            <CardTitle>Edit Credit Card</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleUpdateCard} className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Bank Name</label>
+                                        <Input
+                                            type="text"
+                                            required
+                                            value={editingCard.bankName}
+                                            onChange={(e) => setEditingCard({ ...editingCard, bankName: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Card Name</label>
+                                        <Input
+                                            type="text"
+                                            required
+                                            value={editingCard.cardName}
+                                            onChange={(e) => setEditingCard({ ...editingCard, cardName: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Last 4 Digits</label>
+                                        <Input
+                                            type="text"
+                                            required
+                                            maxLength={4}
+                                            value={editingCard.last4Digits}
+                                            onChange={(e) => setEditingCard({ ...editingCard, last4Digits: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Credit Limit (₹)</label>
+                                        <Input
+                                            type="number"
+                                            required
+                                            value={editingCard.creditLimit}
+                                            onChange={(e) => setEditingCard({ ...editingCard, creditLimit: parseFloat(e.target.value) || 0 })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Current Balance (₹)</label>
+                                    <Input
+                                        type="number"
+                                        value={editingCard.currentBalance}
+                                        onChange={(e) => setEditingCard({ ...editingCard, currentBalance: parseFloat(e.target.value) || 0 })}
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-3 pt-4">
+                                    <Button type="button" variant="outline" onClick={() => setEditingCard(null)}>
                                         Cancel
                                     </Button>
                                     <Button type="submit">

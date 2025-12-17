@@ -30,13 +30,17 @@ export const DebtTile = ({ receivable, payable, net }: DebtTileProps) => {
                         <div className="flex items-center gap-1 text-emerald-500 text-xs font-medium">
                             <ArrowDownLeft className="h-3 w-3" /> To Receive
                         </div>
-                        <p className="font-semibold">₹{receivable.toLocaleString()}</p>
+                        <p className={`font-semibold ${receivable > 0 ? 'text-emerald-500' : 'text-foreground'}`}>
+                            ₹{receivable.toLocaleString()}
+                        </p>
                     </div>
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-1 text-red-500 text-xs font-medium">
+                    <div className="space-y-1 text-right">
+                        <div className="flex items-center justify-end gap-1 text-red-500 text-xs font-medium">
                             <ArrowUpRight className="h-3 w-3" /> To Pay
                         </div>
-                        <p className="font-semibold">₹{payable.toLocaleString()}</p>
+                        <p className={`font-semibold ${payable > 0 ? 'text-red-500' : 'text-foreground'}`}>
+                            ₹{payable.toLocaleString()}
+                        </p>
                     </div>
                 </div>
             </CardContent>
