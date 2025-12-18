@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { Plus, Loader2, ArrowUpRight, ArrowDownLeft, Search, ChevronDown, UserPlus, History, WalletCards } from "lucide-react";
+import { Plus, Loader2, ArrowUpRight, ArrowDownLeft, Search, ChevronDown, UserPlus, History, WalletCards, ArrowDownCircle, ArrowUpCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { SwipeableCard } from "@/components/ui/SwipeableCard";
+import { FloatingActionButton } from "@/components/ui/FloatingActionButton";
+import { DateFilter } from "@/components/dashboard/DateFilter";
 
 interface Debt {
     _id: string;
@@ -47,6 +50,11 @@ function DebtsContent() {
     const [isLoading, setIsLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
 
+    // Mobile View State
+    const [activeTab, setActiveTab] = useState<'borrow' | 'lend'>('borrow'); // 'borrow' = Liability (I Owe), 'lend' = Asset (Owed to Me)
+    const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
+    const [dateRange, setDateRange] = useState<{ start: string, end: string } | null>(null);
+
     // Form State
     const [formData, setFormData] = useState({
         type: 'borrow' as 'borrow' | 'lend',
@@ -66,11 +74,11 @@ function DebtsContent() {
     const [showPersonDropdown, setShowPersonDropdown] = useState(false);
 
     useEffect(() => {
-        if (status === 'authenticated') {
+        if (status === 'authenticated' && dateRange) {
             fetchDebts();
             fetchAccountsData();
         }
-    }, [status]);
+    }, [status, dateRange]);
 
     // Handle Quick Action param
     useEffect(() => {
@@ -86,7 +94,12 @@ function DebtsContent() {
     const fetchDebts = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch('/api/debts');
+            const query = new URLSearchParams();
+            if (dateRange) {
+                query.append('startDate', dateRange.start);
+                query.append('endDate', dateRange.end);
+            }
+            const res = await fetch(`/api/debts?${query.toString()}`);
             if (res.ok) setDebts(await res.json());
         } catch (error) { console.error(error); } finally { setIsLoading(false); }
     };
@@ -176,29 +189,31 @@ function DebtsContent() {
         <div className="container mx-auto py-8 px-4 md:px-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header / Summary */}
             <div className="flex flex-col gap-6">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-row flex-wrap items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent w-fit">Debt/Lent</h1>
-                        <p className="text-muted-foreground mt-1">Manage your debts and loans efficiently.</p>
+                        <p className="text-muted-foreground mt-1 hidden md:block">Manage your debts and loans efficiently.</p>
+                        <p className="text-muted-foreground mt-1 md:hidden text-xs">Manage debts & loans</p>
                     </div>
-                    <div className="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+                    <div className="flex items-center gap-2 md:gap-3 shrink-0">
                         <Link href="/debts/history">
-                            <Button variant="outline" size="icon" title="View History" className="shrink-0">
+                            <Button variant="ghost" size="icon" title="View History" className="shrink-0 h-9 w-9">
                                 <History className="h-5 w-5" />
                             </Button>
                         </Link>
                         <Link href="/debts/manage">
-                            <Button variant="outline" size="icon" title="Manage Settlements" className="shrink-0">
+                            <Button variant="ghost" size="icon" title="Manage Settlements" className="shrink-0 h-9 w-9">
                                 <WalletCards className="h-5 w-5" />
                             </Button>
                         </Link>
-                        <Button onClick={() => setIsAdding(true)} className="flex-1 md:flex-none shadow-lg shadow-primary/20 whitespace-nowrap">
+                        <DateFilter onFilterChange={setDateRange} className="w-24 md:w-36 shrink-0" defaultFilter="all-time" />
+                        <Button onClick={() => setIsAdding(true)} className="hidden md:flex flex-1 md:flex-none shadow-lg shadow-primary/20 whitespace-nowrap">
                             <Plus className="h-4 w-4 mr-2" /> Add Record
                         </Button>
                     </div>
                 </div>
 
-                <Card className="bg-card/50 backdrop-blur-sm border-border">
+                <Card className="bg-card/50 backdrop-blur-sm border-border hidden md:block">
                     <CardContent className="p-6 flex flex-col md:flex-row items-center justify-around gap-6">
                         <div className="text-center">
                             <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Net Position</p>
@@ -220,8 +235,111 @@ function DebtsContent() {
                 </Card>
             </div>
 
-            {/* Split View */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* --- MOBILE VIEW (Tabs + List) --- */}
+            <div className="md:hidden space-y-6">
+                {/* Compact Summary (Mobile) */}
+                <div className="grid grid-cols-3 gap-2 text-center pb-2">
+                    <div className="space-y-0.5">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Net Position</p>
+                        <p className={`text-sm font-bold ${netPosition > 0 ? 'text-emerald-500' : netPosition < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
+                            {netPosition > 0 ? '+' : ''}₹{Math.abs(netPosition).toLocaleString()}
+                        </p>
+                    </div>
+                    <div className="space-y-0.5 border-l border-border/50">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">You Owe</p>
+                        <p className="text-sm font-bold text-red-500">
+                            ₹{totalLiabilityVal.toLocaleString()}
+                        </p>
+                    </div>
+                    <div className="space-y-0.5 border-l border-border/50">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Owed to Me</p>
+                        <p className="text-sm font-bold text-emerald-500">
+                            ₹{totalAssetVal.toLocaleString()}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Toggle Tabs */}
+                <div className="flex p-1 bg-muted/30 rounded-full w-full max-w-md mx-auto relative backdrop-blur-sm border border-white/5">
+                    <button
+                        onClick={() => setActiveTab('borrow')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-full transition-all duration-300 relative z-10 ${activeTab === 'borrow'
+                            ? 'bg-red-500/10 text-red-500 shadow-sm ring-1 ring-red-500/20'
+                            : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        <ArrowDownLeft className="h-4 w-4" /> I Owe
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('lend')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-full transition-all duration-300 relative z-10 ${activeTab === 'lend'
+                            ? 'bg-emerald-500/10 text-emerald-500 shadow-sm ring-1 ring-emerald-500/20'
+                            : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                    >
+                        <ArrowUpRight className="h-4 w-4" /> Owed to Me
+                    </button>
+                </div>
+
+
+
+                {/* List */}
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-sm font-medium text-muted-foreground">People List</h3>
+                        <span className="text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded-full">{(activeTab === 'lend' ? assets : liabilities).length} people</span>
+                    </div>
+
+                    {(activeTab === 'lend' ? assets : liabilities).length === 0 ? (
+                        <div className="text-center py-12 border rounded-xl border-dashed bg-muted/20 text-muted-foreground">
+                            No active {activeTab === 'lend' ? 'loans given' : 'debts'} found.
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {(activeTab === 'lend' ? assets : liabilities).map((p) => (
+                                <SwipeableCard
+                                    key={p.name}
+                                    id={p.name}
+                                    openId={openSwipeId}
+                                    onSwipeOpen={setOpenSwipeId}
+                                    onEdit={() => router.push(`/debts/${encodeURIComponent(p.name)}`)}
+                                    onDelete={() => toast("Please settle balance to remove.")}
+                                    className="rounded-xl"
+                                >
+                                    <Card
+                                        onClick={() => router.push(`/debts/${encodeURIComponent(p.name)}`)}
+                                        className="group relative overflow-hidden border-l-4 transition-all duration-300 hover:shadow-md hover:translate-x-1 active:scale-[0.99] rounded-xl cursor-pointer"
+                                        style={{ borderLeftColor: activeTab === 'lend' ? '#10b981' : '#ef4444' }}
+                                    >
+                                        <CardContent className="p-4 flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-lg ${activeTab === 'lend' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                                                    {p.name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold">{p.name}</p>
+                                                    <p className="text-xs text-muted-foreground">Tap for details</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className={`font-bold text-lg ${activeTab === 'lend' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                                    ₹{Math.abs(p.netAmount).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </SwipeableCard>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Floating Add Button */}
+                <FloatingActionButton onClick={() => setIsAdding(true)} />
+            </div>
+
+            {/* Split View (Desktop) */}
+            <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Liabilities Column */}
                 <div className="space-y-4">
                     <h2 className="text-lg font-semibold text-red-600 flex items-center gap-2"><ArrowDownLeft className="h-5 w-5" /> People I Owe</h2>
@@ -315,7 +433,7 @@ function DebtsContent() {
                                             <Input
                                                 type="text"
                                                 required
-                                                className="pl-3 pr-10"
+                                                className="pl-3 pr-10 w-full min-w-0"
                                                 placeholder="Select or Type Name"
                                                 value={formData.personName}
                                                 onChange={(e) => {
@@ -377,7 +495,7 @@ function DebtsContent() {
                                     {/* Date */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium">Date</label>
-                                        <Input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                                        <Input type="date" required className="text-xs sm:text-sm" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
                                     </div>
 
                                     {/* Account */}

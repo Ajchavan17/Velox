@@ -12,8 +12,21 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { searchParams } = new URL(req.url);
+        const startDate = searchParams.get('startDate');
+        const endDate = searchParams.get('endDate');
+
+        let query: any = { userId: session.user.id };
+
+        if (startDate && endDate) {
+            query.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        }
+
         await dbConnect();
-        const debts = await Debt.find({ userId: session.user.id }).sort({ createdAt: -1 });
+        const debts = await Debt.find(query).sort({ createdAt: -1 });
 
         return NextResponse.json(debts);
     } catch (error) {

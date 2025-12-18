@@ -9,17 +9,36 @@ interface SwipeableCardProps {
     onEdit: () => void;
     onDelete: () => void;
     className?: string; // To merge styles
+    id?: string;
+    openId?: string | null;
+    onSwipeOpen?: (id: string | null) => void;
 }
 
-export const SwipeableCard = ({ children, onEdit, onDelete, className = "" }: SwipeableCardProps) => {
+export const SwipeableCard = ({ children, onEdit, onDelete, className = "", id, openId, onSwipeOpen }: SwipeableCardProps) => {
     const [offset, setOffset] = useState(0);
     const startX = useRef<number | null>(null);
     const currentOffset = useRef(0);
     const maxSwipe = 130; // Total width of actions + spacing
+    const isTouching = useRef(false);
+
+    // Close if another card is opened (or if openId is cleared), BUT NOT if we are currently touching this one
+    React.useEffect(() => {
+        if (!isTouching.current && id && openId !== id && offset !== 0) {
+            setOffset(0);
+            currentOffset.current = 0;
+        }
+    }, [openId, id, offset]);
 
     const handleTouchStart = (e: React.TouchEvent) => {
         // Stop bubbling to prevent conflicts with global swipe navigation
         e.stopPropagation();
+        isTouching.current = true;
+
+        // If another card is open, close it immediately when we start touching this one
+        if (openId && openId !== id && onSwipeOpen) {
+            onSwipeOpen(null);
+        }
+
         startX.current = e.touches[0].clientX;
     };
 
@@ -44,14 +63,17 @@ export const SwipeableCard = ({ children, onEdit, onDelete, className = "" }: Sw
     };
 
     const handleTouchEnd = () => {
+        isTouching.current = false;
         if (offset < -(maxSwipe / 3)) {
             // Snap open
             setOffset(-maxSwipe);
             currentOffset.current = -maxSwipe;
+            if (onSwipeOpen && id) onSwipeOpen(id);
         } else {
             // Snap closed
             setOffset(0);
             currentOffset.current = 0;
+            if (onSwipeOpen && id && openId === id) onSwipeOpen(null);
         }
         startX.current = null;
     };
@@ -59,6 +81,7 @@ export const SwipeableCard = ({ children, onEdit, onDelete, className = "" }: Sw
     const resetSwipe = () => {
         setOffset(0);
         currentOffset.current = 0;
+        if (onSwipeOpen && id && openId === id) onSwipeOpen(null);
     };
 
     return (

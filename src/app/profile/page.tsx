@@ -59,6 +59,7 @@ export default function ProfilePage() {
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
     const [editingCard, setEditingCard] = useState<CreditCard | null>(null);
+    const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
 
     // Form States
     const [newAccount, setNewAccount] = useState({
@@ -452,6 +453,9 @@ export default function ProfilePage() {
                             accounts.map((account) => (
                                 <SwipeableCard
                                     key={account._id}
+                                    id={account._id}
+                                    openId={openSwipeId}
+                                    onSwipeOpen={setOpenSwipeId}
                                     onEdit={() => setEditingAccount(account)}
                                     onDelete={() => setDeletingItem({ type: 'account', id: account._id })}
                                     className="rounded-xl group"
@@ -605,6 +609,9 @@ export default function ProfilePage() {
                             cards.map((card) => (
                                 <SwipeableCard
                                     key={card._id}
+                                    id={card._id}
+                                    openId={openSwipeId}
+                                    onSwipeOpen={setOpenSwipeId}
                                     onEdit={() => setEditingCard(card)}
                                     onDelete={() => setDeletingItem({ type: 'card', id: card._id })}
                                     className="rounded-xl group"
@@ -737,6 +744,9 @@ export default function ProfilePage() {
                                 categories.filter(c => c.type === 'income').map(category => (
                                     <SwipeableCard
                                         key={category._id}
+                                        id={category._id}
+                                        openId={openSwipeId}
+                                        onSwipeOpen={setOpenSwipeId}
                                         onEdit={() => setEditingCategory(category)}
                                         onDelete={() => setDeletingItem({ type: 'category', id: category._id })}
                                         className="rounded-lg"
@@ -797,6 +807,9 @@ export default function ProfilePage() {
                                 categories.filter(c => c.type === 'expense').map(category => (
                                     <SwipeableCard
                                         key={category._id}
+                                        id={category._id}
+                                        openId={openSwipeId}
+                                        onSwipeOpen={setOpenSwipeId}
                                         onEdit={() => setEditingCategory(category)}
                                         onDelete={() => setDeletingItem({ type: 'category', id: category._id })}
                                         className="rounded-lg"

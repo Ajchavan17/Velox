@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { toast } from "react-hot-toast";
 import { FloatingActionButton } from "@/components/ui/FloatingActionButton";
 import { SwipeableCard } from "@/components/ui/SwipeableCard";
+import { DateFilter } from "@/components/dashboard/DateFilter";
 
 interface Transaction {
     _id: string;
@@ -60,6 +61,8 @@ function TransactionsContent() {
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
     const [selectedAccountId, setSelectedAccountId] = useState('');
+    const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
+    const [dateRange, setDateRange] = useState<{ start: string, end: string } | null>(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -72,12 +75,12 @@ function TransactionsContent() {
     });
 
     useEffect(() => {
-        if (status === 'authenticated') {
+        if (status === 'authenticated' && dateRange) {
             fetchTransactions();
             fetchCategories();
             fetchAccountsData();
         }
-    }, [status]);
+    }, [status, dateRange]);
 
     // Handle Quick Action param
     useEffect(() => {
@@ -162,7 +165,12 @@ function TransactionsContent() {
     const fetchTransactions = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/transactions`);
+            const query = new URLSearchParams();
+            if (dateRange) {
+                query.append('startDate', dateRange.start);
+                query.append('endDate', dateRange.end);
+            }
+            const res = await fetch(`/api/transactions?${query.toString()}`);
             if (res.ok) {
                 const data = await res.json();
                 setTransactions(data);
@@ -278,6 +286,9 @@ function TransactionsContent() {
                     </h1>
                     <p className="text-muted-foreground text-xs md:text-sm mt-1">Manage your income and expenses</p>
                 </div>
+                <div className="flex items-center gap-2">
+                    <DateFilter onFilterChange={setDateRange} className="w-32 md:w-36" />
+                </div>
                 <div className="hidden md:block">
                     <Button onClick={() => {
                         setIsAdding(true);
@@ -299,8 +310,8 @@ function TransactionsContent() {
                     <button
                         onClick={() => setActiveTab('expense')}
                         className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-full transition-all duration-300 relative z-10 ${activeTab === 'expense'
-                                ? 'bg-red-500/10 text-red-500 shadow-sm ring-1 ring-red-500/20'
-                                : 'text-muted-foreground hover:text-foreground'
+                            ? 'bg-red-500/10 text-red-500 shadow-sm ring-1 ring-red-500/20'
+                            : 'text-muted-foreground hover:text-foreground'
                             }`}
                     >
                         <ArrowDownCircle className="h-4 w-4" /> Expense
@@ -308,8 +319,8 @@ function TransactionsContent() {
                     <button
                         onClick={() => setActiveTab('income')}
                         className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-full transition-all duration-300 relative z-10 ${activeTab === 'income'
-                                ? 'bg-emerald-500/10 text-emerald-500 shadow-sm ring-1 ring-emerald-500/20'
-                                : 'text-muted-foreground hover:text-foreground'
+                            ? 'bg-emerald-500/10 text-emerald-500 shadow-sm ring-1 ring-emerald-500/20'
+                            : 'text-muted-foreground hover:text-foreground'
                             }`}
                     >
                         <ArrowUpCircle className="h-4 w-4" /> Income
@@ -352,6 +363,9 @@ function TransactionsContent() {
                             {filteredTransactions.map((t) => (
                                 <SwipeableCard // Will fix import in tool logic or manual
                                     key={t._id}
+                                    id={t._id}
+                                    openId={openSwipeId}
+                                    onSwipeOpen={setOpenSwipeId}
                                     onEdit={() => handleEdit(t)}
                                     onDelete={() => handleDelete(t._id)}
                                     className="rounded-xl"
@@ -550,7 +564,7 @@ function TransactionsContent() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 gap-2">
                                         <div className="space-y-2">
                                             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Account</label>
                                             <Select
@@ -570,7 +584,7 @@ function TransactionsContent() {
                                                 required
                                                 value={formData.date}
                                                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                                className="bg-muted/20"
+                                                className="bg-muted/20 w-full min-w-0 text-xs sm:text-sm"
                                             />
                                         </div>
                                     </div>

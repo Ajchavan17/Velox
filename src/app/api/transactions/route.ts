@@ -16,10 +16,19 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const limit = searchParams.get('limit');
         const type = searchParams.get('type');
+        const startDate = searchParams.get('startDate');
+        const endDate = searchParams.get('endDate');
 
         let query: any = { userId: user.id };
         if (type && type !== 'all') {
             query.type = type;
+        }
+
+        if (startDate && endDate) {
+            query.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
         }
 
         let transactionsQuery = Transaction.find(query).sort({ date: -1 });
