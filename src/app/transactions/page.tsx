@@ -18,6 +18,7 @@ import { toast } from "react-hot-toast";
 import { FloatingActionButton } from "@/components/ui/FloatingActionButton";
 import { SwipeableCard } from "@/components/ui/SwipeableCard";
 import { DateFilter } from "@/components/dashboard/DateFilter";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface Transaction {
     _id: string;
@@ -27,6 +28,7 @@ interface Transaction {
     date: string;
     description: string;
     accountId?: string;
+    subcategory?: string;
 }
 
 interface Category {
@@ -287,19 +289,19 @@ function TransactionsContent() {
                     <p className="text-muted-foreground text-xs md:text-sm mt-1">Manage your income and expenses</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <DateFilter onFilterChange={setDateRange} className="w-32 md:w-36" />
-                </div>
-                <div className="hidden md:block">
-                    <Button onClick={() => {
-                        setIsAdding(true);
-                        setEditingId(null);
-                        setFormData({ ...formData, type: activeTab, amount: '', category: '', description: '', accountId: '' });
-                        setSelectedCategory('');
-                        setSelectedSubcategory('');
-                        setSelectedAccountId('');
-                    }}>
-                        <Plus className="h-4 w-4 mr-2" /> Add Transaction
-                    </Button>
+                    <DateFilter onFilterChange={setDateRange} className="w-24 md:w-36 shrink-0" defaultFilter="this-month" />
+                    <div className="hidden md:block">
+                        <Button onClick={() => {
+                            setIsAdding(true);
+                            setEditingId(null);
+                            setFormData({ ...formData, type: activeTab, amount: '', category: '', description: '', accountId: '' });
+                            setSelectedCategory('');
+                            setSelectedSubcategory('');
+                            setSelectedAccountId('');
+                        }}>
+                            <Plus className="h-4 w-4 mr-2" /> Add Transaction
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -333,8 +335,8 @@ function TransactionsContent() {
                     <CardContent className="p-6 flex items-center justify-between relative z-10">
                         <div>
                             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total {activeTab === 'income' ? 'Received' : 'Spent'}</p>
-                            <h2 className={`text-3xl font-bold tracking-tight ${activeTab === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
-                                ₹{totalAmount.toLocaleString()}
+                            <h2 className="text-3xl font-bold tracking-tight">
+                                <CurrencyDisplay amount={totalAmount} type={activeTab} />
                             </h2>
                         </div>
                         <div className={`p-3 rounded-full ${activeTab === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
@@ -361,42 +363,58 @@ function TransactionsContent() {
                     ) : (
                         <div className="space-y-3">
                             {filteredTransactions.map((t) => (
-                                <SwipeableCard // Will fix import in tool logic or manual
+                                <SwipeableCard
                                     key={t._id}
                                     id={t._id}
                                     openId={openSwipeId}
                                     onSwipeOpen={setOpenSwipeId}
                                     onEdit={() => handleEdit(t)}
                                     onDelete={() => handleDelete(t._id)}
-                                    className="rounded-xl"
+                                    className="rounded-xl group"
                                 >
-                                    <Card
-                                        className="group relative overflow-hidden border-l-4 transition-all duration-300 hover:shadow-md hover:translate-x-1 active:scale-[0.99] rounded-xl"
-                                        style={{ borderLeftColor: t.type === 'income' ? '#10b981' : '#ef4444' }}
-                                    >
-                                        <CardContent className="p-4 flex items-center justify-between">
-                                            <div className="flex items-center gap-4 flex-1 min-w-0">
-                                                <div className={`p-2.5 rounded-xl flex-shrink-0 ${t.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
-                                                    {t.type === 'income' ? <ArrowUpCircle className="h-5 w-5" /> : <ArrowDownCircle className="h-5 w-5" />}
-                                                </div>
-
-                                                <div className="min-w-0">
-                                                    <p className="font-semibold text-foreground truncate">{t.description}</p>
-                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                                                        <span className="bg-muted/50 px-1.5 py-0.5 rounded capitalize">{t.category}</span>
-                                                        <span>•</span>
-                                                        <span>{format(new Date(t.date), 'MMM d')}</span>
-                                                    </div>
-                                                </div>
+                                    <div className="flex items-center justify-between p-4 bg-background/60 backdrop-blur-md border border-border/40 rounded-xl transition-all duration-300 hover:shadow-md cursor-pointer border-l-4 relative overflow-hidden"
+                                        style={{ borderLeftColor: t.type === 'income' ? '#10b981' : '#ef4444' }}>
+                                        <div className="flex items-center gap-4">
+                                            <div className={`shrink-0 ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                                {t.type === 'income' ? <ArrowUpCircle className="h-8 w-8" /> : <ArrowDownCircle className="h-8 w-8" />}
                                             </div>
-
-                                            <div className="text-right pl-3">
-                                                <p className={`font-bold text-base ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
-                                                    {t.type === 'income' ? '+' : '-'}₹{Number(t.amount).toLocaleString()}
+                                            <div>
+                                                <p className="font-semibold text-sm md:text-base leading-none mb-1">{t.description || "No Description"}</p>
+                                                <p className="text-xs text-muted-foreground truncate max-w-[120px] md:max-w-xs">
+                                                    {t.category}{t.subcategory ? ` • ${t.subcategory}` : ''}
                                                 </p>
                                             </div>
-                                        </CardContent>
-                                    </Card>
+                                        </div>
+                                        <div className="text-right transition-transform duration-300 group-hover:-translate-x-24">
+                                            <CurrencyDisplay
+                                                amount={Number(t.amount)}
+                                                type={t.type}
+                                                className="font-bold text-sm md:text-base"
+                                            />
+                                            <p className="text-[10px] md:text-xs text-muted-foreground">
+                                                {format(new Date(t.date), 'MMM d, yy')}
+                                            </p>
+                                        </div>
+                                        {/* Desktop Hover Action only */}
+                                        <div className="hidden md:flex items-center gap-1 absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+                                                onClick={(e) => { e.stopPropagation(); handleEdit(t); }}
+                                            >
+                                                <Edit2 className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-9 w-9 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-full"
+                                                onClick={(e) => { e.stopPropagation(); handleDelete(t._id); }}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </SwipeableCard>
                             ))}
                         </div>
@@ -406,7 +424,6 @@ function TransactionsContent() {
 
             {/* --- DESKTOP VIEW (Split Columns) --- */}
             <div className="hidden md:grid grid-cols-2 gap-8">
-                {/* Income Column */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between pb-2 border-b border-border/50">
                         <h2 className="text-lg font-semibold flex items-center gap-2 text-emerald-600">
@@ -418,26 +435,56 @@ function TransactionsContent() {
                     </div>
                     <div className="space-y-3">
                         {incomeTransactions.map((t) => (
-                            <Card key={t._id} className="group hover:border-emerald-500/30 transition-all duration-300 hover:shadow-sm">
-                                <CardContent className="p-4 flex items-center justify-between">
-                                    <div className="flex-1 min-w-0 mr-4">
-                                        <p className="font-semibold truncate">{t.description}</p>
-                                        <p className="text-xs text-muted-foreground">{t.category} • {format(new Date(t.date), 'MMM d, yyyy')}</p>
+                            <div
+                                key={t._id}
+                                className="flex items-center justify-between p-4 bg-background/60 backdrop-blur-md border border-border/40 rounded-xl transition-all duration-300 hover:shadow-md cursor-pointer border-l-4 relative overflow-hidden group"
+                                style={{ borderLeftColor: '#10b981' }}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="shrink-0 text-emerald-500">
+                                        <ArrowUpCircle className="h-8 w-8" />
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <p className="font-bold text-emerald-600">+₹{Number(t.amount).toLocaleString()}</p>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(t)}><Edit2 className="h-3.5 w-3.5" /></Button>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(t._id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                                        </div>
+                                    <div>
+                                        <p className="font-semibold text-sm md:text-base leading-none mb-1">{t.description || "No Description"}</p>
+                                        <p className="text-xs text-muted-foreground truncate max-w-[120px] md:max-w-xs">
+                                            {t.category}{t.subcategory ? ` • ${t.subcategory}` : ''}
+                                        </p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
+                                <div className="text-right transition-transform duration-300 group-hover:-translate-x-24">
+                                    <CurrencyDisplay
+                                        amount={Number(t.amount)}
+                                        type="income"
+                                        className="font-bold text-sm md:text-base"
+                                    />
+                                    <p className="text-[10px] md:text-xs text-muted-foreground">
+                                        {format(new Date(t.date), 'MMM d, yy')}
+                                    </p>
+                                </div>
+                                {/* Desktop Hover Action */}
+                                <div className="hidden md:flex items-center gap-1 absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+                                        onClick={() => handleEdit(t)}
+                                    >
+                                        <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-full"
+                                        onClick={() => handleDelete(t._id)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
                         ))}
                         {incomeTransactions.length === 0 && <div className="text-center py-8 text-muted-foreground">No income recorded.</div>}
                     </div>
                 </div>
-                {/* Expense Column */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between pb-2 border-b border-border/50">
                         <h2 className="text-lg font-semibold flex items-center gap-2 text-red-600">
@@ -449,21 +496,52 @@ function TransactionsContent() {
                     </div>
                     <div className="space-y-3">
                         {expenseTransactions.map((t) => (
-                            <Card key={t._id} className="group hover:border-red-500/30 transition-all duration-300 hover:shadow-sm">
-                                <CardContent className="p-4 flex items-center justify-between">
-                                    <div className="flex-1 min-w-0 mr-4">
-                                        <p className="font-semibold truncate">{t.description}</p>
-                                        <p className="text-xs text-muted-foreground">{t.category} • {format(new Date(t.date), 'MMM d, yyyy')}</p>
+                            <div
+                                key={t._id}
+                                className="flex items-center justify-between p-4 bg-background/60 backdrop-blur-md border border-border/40 rounded-xl transition-all duration-300 hover:shadow-md cursor-pointer border-l-4 relative overflow-hidden group"
+                                style={{ borderLeftColor: '#ef4444' }}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="shrink-0 text-red-500">
+                                        <ArrowDownCircle className="h-8 w-8" />
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <p className="font-bold text-red-600">-₹{Number(t.amount).toLocaleString()}</p>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(t)}><Edit2 className="h-3.5 w-3.5" /></Button>
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(t._id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                                        </div>
+                                    <div>
+                                        <p className="font-semibold text-sm md:text-base leading-none mb-1">{t.description || "No Description"}</p>
+                                        <p className="text-xs text-muted-foreground truncate max-w-[120px] md:max-w-xs">
+                                            {t.category}{t.subcategory ? ` • ${t.subcategory}` : ''}
+                                        </p>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
+                                <div className="text-right transition-transform duration-300 group-hover:-translate-x-24">
+                                    <CurrencyDisplay
+                                        amount={Number(t.amount)}
+                                        type="expense"
+                                        className="font-bold text-sm md:text-base"
+                                    />
+                                    <p className="text-[10px] md:text-xs text-muted-foreground">
+                                        {format(new Date(t.date), 'MMM d, yy')}
+                                    </p>
+                                </div>
+                                {/* Desktop Hover Action */}
+                                <div className="hidden md:flex items-center gap-1 absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+                                        onClick={() => handleEdit(t)}
+                                    >
+                                        <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-full"
+                                        onClick={() => handleDelete(t._id)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
                         ))}
                         {expenseTransactions.length === 0 && <div className="text-center py-8 text-muted-foreground">No expenses recorded.</div>}
                     </div>

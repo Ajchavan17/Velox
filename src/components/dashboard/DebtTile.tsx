@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/Card";
 import { ArrowUpRight, ArrowDownLeft, WalletCards } from "lucide-react";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface DebtTileProps {
     receivable: number;
@@ -18,8 +19,8 @@ export const DebtTile = ({ receivable, payable, net }: DebtTileProps) => {
 
                 <div className="mb-2 md:mb-4">
                     <div className="flex items-baseline justify-between">
-                        <p className={`text-xl md:text-3xl font-bold ${net > 0 ? 'text-emerald-500' : net < 0 ? 'text-red-500' : 'text-foreground'}`}>
-                            {net > 0 ? '+' : net < 0 ? '-' : ''}₹{Math.abs(net).toLocaleString()}
+                        <p className="text-xl md:text-3xl font-bold">
+                            <CurrencyDisplay amount={net} type={net > 0 ? 'income' : net < 0 ? 'expense' : 'neutral'} />
                         </p>
                         <p className="text-[10px] md:text-xs text-muted-foreground uppercase tracking-wide md:mt-1">Net Position</p>
                     </div>
@@ -30,16 +31,16 @@ export const DebtTile = ({ receivable, payable, net }: DebtTileProps) => {
                         <div className="flex items-center gap-1 text-emerald-500 text-xs font-medium">
                             <ArrowDownLeft className="h-3 w-3" /> To Receive
                         </div>
-                        <p className={`font-semibold ${receivable > 0 ? 'text-emerald-500' : 'text-foreground'}`}>
-                            ₹{receivable.toLocaleString()}
+                        <p className="font-semibold">
+                            <CurrencyDisplay amount={receivable} type="income" />
                         </p>
                     </div>
                     <div className="space-y-1 text-right">
                         <div className="flex items-center justify-end gap-1 text-red-500 text-xs font-medium">
                             <ArrowUpRight className="h-3 w-3" /> To Pay
                         </div>
-                        <p className={`font-semibold ${payable > 0 ? 'text-red-500' : 'text-foreground'}`}>
-                            ₹{payable.toLocaleString()}
+                        <p className="font-semibold">
+                            <CurrencyDisplay amount={payable} type="expense" />
                         </p>
                     </div>
                 </div>

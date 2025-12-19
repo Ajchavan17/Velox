@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Plus, Loader2, ArrowUpRight, ArrowDownLeft, Landmark, Percent, Calendar, CheckCircle2 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { calculateEMI } from "@/lib/loanUtils"; // We can reuse logic if feasible, or duplicate simple math client side
+import { calculateEMI } from "@/lib/loanUtils";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 // Types
 interface Loan {
@@ -209,21 +210,27 @@ export default function LoansDashboard() {
                 <Card className="bg-card/50 backdrop-blur-sm border-border">
                     <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground uppercase">Monthly EMI Burn</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-red-500">₹{Math.round(monthlyBurn).toLocaleString()}</div>
+                        <div className="text-3xl font-bold">
+                            <CurrencyDisplay amount={monthlyBurn} type="expense" />
+                        </div>
                         <p className="text-xs text-muted-foreground mt-1">Total active outgoing EMIs</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-card/50 backdrop-blur-sm border-border">
                     <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground uppercase">Total Loan Liability</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-foreground">₹{totalTaken.toLocaleString()}</div>
+                        <div className="text-3xl font-bold">
+                            <CurrencyDisplay amount={totalTaken} className="text-foreground" />
+                        </div>
                         <p className="text-xs text-muted-foreground mt-1">Principal amount borrowed</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-card/50 backdrop-blur-sm border-border">
                     <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground uppercase">Total Lent Assets</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-emerald-500">₹{totalGiven.toLocaleString()}</div>
+                        <div className="text-3xl font-bold">
+                            <CurrencyDisplay amount={totalGiven} type="income" />
+                        </div>
                         <p className="text-xs text-muted-foreground mt-1">Principal amount given</p>
                     </CardContent>
                 </Card>
@@ -251,13 +258,20 @@ export default function LoansDashboard() {
                                         <p className="text-sm text-muted-foreground">{loan.provider}</p>
                                     </div>
                                     <div className="text-right">
-                                        <div className="font-bold text-lg text-red-500">₹{Math.round(loan.emiAmount).toLocaleString()}<span className="text-xs text-muted-foreground font-normal">/mo</span></div>
+                                        <div className="font-bold text-lg">
+                                            <CurrencyDisplay amount={Math.round(loan.emiAmount)} type="expense" />
+                                            <span className="text-xs text-muted-foreground font-normal">/mo</span>
+                                        </div>
                                         <div className="text-xs text-muted-foreground">Due: {loan.emiDate}th Day</div>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                                    <div className="flex items-center gap-2 text-muted-foreground"><Landmark className="h-4 w-4" /> ₹{loan.principalAmount.toLocaleString()} Principal</div>
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Landmark className="h-4 w-4" />
+                                        <CurrencyDisplay amount={loan.principalAmount} className="text-muted-foreground" />
+                                        Principal
+                                    </div>
                                     <div className="flex items-center gap-2 text-muted-foreground"><Percent className="h-4 w-4" /> {loan.interestRate}% ROI</div>
                                 </div>
 
@@ -325,7 +339,10 @@ export default function LoansDashboard() {
                                         <p className="text-sm text-muted-foreground">To: {loan.provider}</p>
                                     </div>
                                     <div className="text-right">
-                                        <div className="font-bold text-lg text-emerald-500">₹{Math.round(loan.emiAmount).toLocaleString()}<span className="text-xs text-muted-foreground font-normal">/mo</span></div>
+                                        <div className="font-bold text-lg">
+                                            <CurrencyDisplay amount={Math.round(loan.emiAmount)} type="income" />
+                                            <span className="text-xs text-muted-foreground font-normal">/mo</span>
+                                        </div>
                                         <div className="text-xs text-muted-foreground">Due: {loan.emiDate}th Day</div>
                                     </div>
                                 </div>

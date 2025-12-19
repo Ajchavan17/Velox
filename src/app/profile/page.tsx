@@ -1,5 +1,7 @@
 "use client";
 
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
@@ -472,8 +474,8 @@ export default function ProfilePage() {
                                         </div>
                                         <div className="flex items-center gap-2 md:gap-4 pl-2">
                                             <div className="text-right transition-transform duration-300 group-hover:-translate-x-24">
-                                                <p className={`font-bold md:text-2xl ${account.balance > 0 ? 'text-emerald-500' : account.balance < 0 ? 'text-red-500' : 'text-foreground'}`}>
-                                                    ₹{account.balance.toLocaleString()}
+                                                <p className="font-bold md:text-2xl">
+                                                    <CurrencyDisplay amount={account.balance} />
                                                 </p>
                                                 <p className="text-[10px] md:text-xs text-muted-foreground">Available</p>
                                             </div>
@@ -628,8 +630,10 @@ export default function ProfilePage() {
                                         </div>
                                         <div className="flex items-center gap-2 md:gap-4 pl-2">
                                             <div className="text-right transition-transform duration-300 group-hover:-translate-x-24">
-                                                <p className="font-bold md:text-lg">₹{card.currentBalance.toLocaleString()}</p>
-                                                <p className="text-[10px] md:text-xs text-muted-foreground">Used / ₹{card.creditLimit.toLocaleString()}</p>
+                                                <p className="font-bold md:text-lg">
+                                                    <CurrencyDisplay amount={card.currentBalance} type={card.currentBalance > 0 ? 'expense' : 'neutral'} />
+                                                </p>
+                                                <p className="text-[10px] md:text-xs text-muted-foreground">Used / <CurrencyDisplay amount={card.creditLimit} showSymbol={true} className="text-muted-foreground" /></p>
                                             </div>
                                             {/* Desktop Hover Action only */}
                                             <div className="hidden md:flex items-center gap-1 absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300">

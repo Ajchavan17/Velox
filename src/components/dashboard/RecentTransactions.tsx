@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { format } from "date-fns";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface Transaction {
     _id: string;
@@ -19,13 +20,7 @@ interface RecentTransactionsProps {
 
 export const RecentTransactions = ({ transactions, currency = 'INR' }: RecentTransactionsProps) => {
     // Currency formatter
-    const formatAmount = (amount: number) => {
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: currency,
-            maximumFractionDigits: 0
-        }).format(amount);
-    };
+    // Currency formatter logic moved to CurrencyDisplay component
 
     return (
         <Card className="glass-card border-primary/20 h-full">
@@ -59,8 +54,8 @@ export const RecentTransactions = ({ transactions, currency = 'INR' }: RecentTra
                                         </p>
                                     </div>
                                 </div>
-                                <div className={`text-sm font-bold whitespace-nowrap ml-auto ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
-                                    {t.type === 'income' ? '+' : '-'} {formatAmount(t.amount)}
+                                <div className="text-right">
+                                    <CurrencyDisplay amount={t.amount} type={t.type} className="text-sm font-bold" />
                                 </div>
                             </div>
                         ))

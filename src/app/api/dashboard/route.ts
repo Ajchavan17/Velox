@@ -6,6 +6,7 @@ import User from '@/models/User';
 import BankAccount from '@/models/BankAccount';
 import CreditCard from '@/models/CreditCard';
 import Debt from '@/models/Debt';
+import Loan from '@/models/Loan';
 import mongoose from 'mongoose';
 
 export async function GET(req: Request) {
@@ -41,6 +42,19 @@ export async function GET(req: Request) {
             else if (debt.type === 'borrow') totalPayable += debt.amount;
         });
         const netDebtPosition = totalReceivable - totalPayable;
+
+        // 3.5 Active Loans & EMI
+        const activeLoansTaken = await Loan.find({ userId, type: 'taken', status: 'active' });
+        const activeLoansGiven = await Loan.find({ userId, type: 'given', status: 'active' });
+
+        const totalLoanTaken = activeLoansTaken.reduce((sum, loan) => sum + (loan.principalAmount || 0), 0);
+        const totalLoanGiven = activeLoansGiven.reduce((sum, loan) => sum + (loan.principalAmount || 0), 0);
+
+        const activeLoansCount = activeLoansTaken.length + activeLoansGiven.length;
+        // Total monthly outflow (EMI)
+        const totalEmiPayable = activeLoansTaken.reduce((sum, loan) => sum + (loan.emiAmount || 0), 0);
+        // Total monthly inflow (EMI)
+        const totalEmiReceivable = activeLoansGiven.reduce((sum, loan) => sum + (loan.emiAmount || 0), 0);
 
 
         // 4. Aggregation Pipeline for Total Income and Expenses (Existing)
@@ -125,28 +139,29 @@ export async function GET(req: Request) {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const categoryDataRaw = await Transaction.aggregate([
-            {
-                $match: {
-                    userId: userId,
-                    type: 'expense',
-                    date: { $gte: thirtyDaysAgo }
-                }
-            },
-            {
-                $group: {
-                    _id: "$category",
-                    value: { $sum: "$amount" }
-                }
-            },
-            { $sort: { value: -1 } },
-            { $limit: 5 } // Top 5 categories
-        ]);
+        const getCategoryStats = async (type: 'income' | 'expense') => {
+            const raw = await Transaction.aggregate([
+                {
+                    $match: {
+                        userId: userId,
+                        type: type,
+                        date: { $gte: thirtyDaysAgo }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$category",
+                        value: { $sum: "$amount" }
+                    }
+                },
+                { $sort: { value: -1 } },
+                { $limit: 5 } // Top 5 categories
+            ]);
+            return raw.map(item => ({ name: item._id, value: item.value }));
+        };
 
-        const categoryData = categoryDataRaw.map(item => ({
-            name: item._id,
-            value: item.value
-        }));
+        const expenseCategoryData = await getCategoryStats('expense');
+        const incomeCategoryData = await getCategoryStats('income');
 
 
         return NextResponse.json({
@@ -157,6 +172,13 @@ export async function GET(req: Request) {
             netDebtPosition,
             totalReceivable,
             totalPayable,
+            activeLoansCount,
+            totalEmiPayable,
+            totalEmiReceivable,
+            totalLoanTaken,
+            totalLoanGiven,
+            loanTakenCount: activeLoansTaken.length,
+            loanGivenCount: activeLoansGiven.length,
             // Legacy Stats
             totalIncome: stats.totalIncome,
             totalExpenses: stats.totalExpenses,
@@ -167,7 +189,9 @@ export async function GET(req: Request) {
             recentTransactions,
             // Charts
             chartData,
-            categoryData
+            categoryData: expenseCategoryData, // Keep backward compatibility for now if needed, or just switch
+            expenseCategoryData,
+            incomeCategoryData
         });
 
     } catch (error) {

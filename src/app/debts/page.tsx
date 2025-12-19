@@ -13,6 +13,7 @@ import { toast } from "react-hot-toast";
 import { SwipeableCard } from "@/components/ui/SwipeableCard";
 import { FloatingActionButton } from "@/components/ui/FloatingActionButton";
 import { DateFilter } from "@/components/dashboard/DateFilter";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface Debt {
     _id: string;
@@ -217,19 +218,23 @@ function DebtsContent() {
                     <CardContent className="p-6 flex flex-col md:flex-row items-center justify-around gap-6">
                         <div className="text-center">
                             <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Net Position</p>
-                            <p className={`text-3xl font-bold mt-1 ${netPosition > 0 ? 'text-emerald-500' : netPosition < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
-                                {netPosition > 0 ? '+' : netPosition < 0 ? '-' : ''}₹{Math.abs(netPosition).toLocaleString()}
+                            <p className="text-3xl font-bold mt-1">
+                                <CurrencyDisplay amount={netPosition} type={netPosition > 0 ? 'income' : netPosition < 0 ? 'expense' : 'neutral'} />
                             </p>
                         </div>
                         <div className="h-px md:h-12 w-full md:w-px bg-border/50" />
                         <div className="text-center">
                             <p className="text-sm font-medium text-red-500/80 uppercase tracking-wider">You Owe</p>
-                            <p className="text-2xl font-bold text-red-600 mt-1">₹{totalLiabilityVal.toLocaleString()}</p>
+                            <p className="text-2xl font-bold mt-1">
+                                <CurrencyDisplay amount={totalLiabilityVal} type="expense" />
+                            </p>
                         </div>
                         <div className="h-px md:h-12 w-full md:w-px bg-border/50" />
                         <div className="text-center">
                             <p className="text-sm font-medium text-emerald-500/80 uppercase tracking-wider">Owed to You</p>
-                            <p className="text-2xl font-bold text-emerald-600 mt-1">₹{totalAssetVal.toLocaleString()}</p>
+                            <p className="text-2xl font-bold mt-1">
+                                <CurrencyDisplay amount={totalAssetVal} type="income" />
+                            </p>
                         </div>
                     </CardContent>
                 </Card>
@@ -241,20 +246,20 @@ function DebtsContent() {
                 <div className="grid grid-cols-3 gap-2 text-center pb-2">
                     <div className="space-y-0.5">
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Net Position</p>
-                        <p className={`text-sm font-bold ${netPosition > 0 ? 'text-emerald-500' : netPosition < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
-                            {netPosition > 0 ? '+' : ''}₹{Math.abs(netPosition).toLocaleString()}
+                        <p className="text-sm font-bold">
+                            <CurrencyDisplay amount={netPosition} type={netPosition > 0 ? 'income' : netPosition < 0 ? 'expense' : 'neutral'} />
                         </p>
                     </div>
                     <div className="space-y-0.5 border-l border-border/50">
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">You Owe</p>
-                        <p className="text-sm font-bold text-red-500">
-                            ₹{totalLiabilityVal.toLocaleString()}
+                        <p className="text-sm font-bold">
+                            <CurrencyDisplay amount={totalLiabilityVal} type="expense" />
                         </p>
                     </div>
                     <div className="space-y-0.5 border-l border-border/50">
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Owed to Me</p>
-                        <p className="text-sm font-bold text-emerald-500">
-                            ₹{totalAssetVal.toLocaleString()}
+                        <p className="text-sm font-bold">
+                            <CurrencyDisplay amount={totalAssetVal} type="income" />
                         </p>
                     </div>
                 </div>
@@ -322,8 +327,8 @@ function DebtsContent() {
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <p className={`font-bold text-lg ${activeTab === 'lend' ? 'text-emerald-500' : 'text-red-500'}`}>
-                                                    ₹{Math.abs(p.netAmount).toLocaleString()}
+                                                <p className="font-bold text-lg">
+                                                    <CurrencyDisplay amount={p.netAmount} type={activeTab === 'lend' ? 'income' : 'expense'} />
                                                 </p>
                                             </div>
                                         </CardContent>
@@ -360,7 +365,9 @@ function DebtsContent() {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-lg font-bold text-red-600">₹{Math.abs(p.netAmount).toLocaleString()}</p>
+                                <p className="text-lg font-bold">
+                                    <CurrencyDisplay amount={p.netAmount} type="expense" />
+                                </p>
                                 <p className="text-xs text-red-600/70">Liability</p>
                             </div>
                         </div>
@@ -387,7 +394,9 @@ function DebtsContent() {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-lg font-bold text-emerald-600">₹{Math.abs(p.netAmount).toLocaleString()}</p>
+                                <p className="text-lg font-bold">
+                                    <CurrencyDisplay amount={p.netAmount} type="income" />
+                                </p>
                                 <p className="text-xs text-emerald-600/70">Asset</p>
                             </div>
                         </div>
