@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
                 await dbConnect();
 
                 const user = await User.findOne({ email: credentials.email })
-                    .select('+password _id name email image plan subscriptionStatus isVerified lockUntil failedLoginAttempts lastLockDuration')
+                    .select('+password _id name email image plan subscriptionStatus isVerified lockUntil failedLoginAttempts lastLockDuration currency')
                     .lean();
                 console.log('User found:', user ? 'Yes' : 'No');
 
@@ -91,7 +91,8 @@ export const authOptions: NextAuthOptions = {
                     email: user.email,
                     image: user.image,
                     plan: user.plan,
-                    subscriptionStatus: user.subscriptionStatus
+                    subscriptionStatus: user.subscriptionStatus,
+                    currency: user.currency || 'INR'
                 };
             },
         }),
@@ -106,10 +107,14 @@ export const authOptions: NextAuthOptions = {
                 token.id = user.id;
                 token.plan = user.plan;
                 token.subscriptionStatus = user.subscriptionStatus;
+                token.currency = user.currency;
             }
             if (trigger === "update" && session) {
                 token.plan = session.user.plan;
                 token.subscriptionStatus = session.user.subscriptionStatus;
+                if (session.user.currency) {
+                    token.currency = session.user.currency;
+                }
             }
             return token;
         },
@@ -118,6 +123,7 @@ export const authOptions: NextAuthOptions = {
                 session.user.id = token.id as string;
                 session.user.plan = token.plan as string;
                 session.user.subscriptionStatus = token.subscriptionStatus as string;
+                session.user.currency = token.currency as string;
             }
             return session;
         },

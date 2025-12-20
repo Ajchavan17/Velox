@@ -7,6 +7,9 @@ import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Loader2, ArrowLeft, ArrowUpRight, ArrowDownLeft, WalletCards, CheckCircle2, ChevronRight } from "lucide-react";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { SwipeableCard } from "@/components/ui/SwipeableCard";
+import { useOfflineData } from "@/hooks/useOfflineData";
 
 interface Debt {
     _id: string;
@@ -26,20 +29,23 @@ interface PersonSummary {
 export default function ManageDebtsPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const [debts, setDebts] = useState<Debt[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    // const [debts, setDebts] = useState<Debt[]>([]); // Replaced
+    // const [isLoading, setIsLoading] = useState(true); // Replaced
+    const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (status === 'authenticated') fetchDebts();
-    }, [status]);
-
-    const fetchDebts = async () => {
-        setIsLoading(true);
-        try {
+    // Offline Hook
+    const { data: debts = [], isLoading: isDebtsLoading } = useOfflineData<Debt[]>({
+        key: 'VELOX_DEBTS_ALL',
+        fetcher: async () => {
             const res = await fetch('/api/debts');
-            if (res.ok) setDebts(await res.json());
-        } catch (error) { console.error(error); } finally { setIsLoading(false); }
-    };
+            if (!res.ok) throw new Error('Failed to fetch debts');
+            return res.json();
+        }
+    });
+
+    const isLoading = isDebtsLoading;
+
+    // fetchDebts removed (handled by hook)
 
     // Aggregate Net Positions
     const { active, settled } = useMemo(() => {
@@ -80,8 +86,8 @@ export default function ManageDebtsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Active Settlements</h1>
-                        <p className="text-muted-foreground mt-1">Review outstanding balances and initiate settlements.</p>
+                        <h1 className="text-xl md:text-3xl font-bold tracking-tight">Active Settlements</h1>
+                        <p className="text-sm md:text-base text-muted-foreground mt-1">Review outstanding balances and initiate settlements.</p>
                     </div>
                 </div>
             </div>
@@ -101,38 +107,76 @@ export default function ManageDebtsPage() {
 
                 {/* Active Settlements */}
                 {active.map(person => (
-                    <div
-                        key={person.name}
-                        onClick={() => router.push(`/debts/${encodeURIComponent(person.name)}`)}
-                        className="bg-card hover:bg-muted/40 border border-border rounded-xl p-5 flex items-center justify-between cursor-pointer transition-all hover:shadow-md group"
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className={`h-12 w-12 rounded-full flex items-center justify-center font-bold text-lg ${person.netAmount < 0 ? 'bg-red-100 text-red-600' : person.netAmount > 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-muted text-muted-foreground'
-                                }`}>
-                                {person.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">{person.name}</h3>
-                                <p className={`text-sm font-medium flex items-center gap-1 ${person.netAmount < 0 ? 'text-red-600' : person.netAmount > 0 ? 'text-emerald-600' : 'text-muted-foreground'
-                                    }`}>
-                                    {person.netAmount < 0 ? <ArrowDownLeft className="h-4 w-4" /> : person.netAmount > 0 ? <ArrowUpRight className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                                    {person.netAmount < 0 ? 'You Owe' : person.netAmount > 0 ? 'Owes You' : 'Settled'}
-                                </p>
-                            </div>
+                    <div key={person.name}>
+                        {/* MOBILE SWIPEABLE CARD */}
+                        <div className="md:hidden">
+                            <SwipeableCard
+                                id={person.name}
+                                openId={openSwipeId}
+                                onSwipeOpen={setOpenSwipeId}
+                                onSettle={() => router.push(`/debts/${encodeURIComponent(person.name)}`)}
+                                className="rounded-xl"
+                            >
+                                <div
+                                    onClick={() => router.push(`/debts/${encodeURIComponent(person.name)}`)}
+                                    className="p-5 flex items-center justify-between bg-card/60 backdrop-blur-md border border-border rounded-xl"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-base ${person.netAmount < 0 ? 'bg-red-100 text-red-600' : person.netAmount > 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-muted text-muted-foreground'
+                                            }`}>
+                                            {person.name.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-base">{person.name}</h3>
+                                            <p className={`text-xs font-medium flex items-center gap-1 mt-0.5 ${person.netAmount < 0 ? 'text-red-600' : person.netAmount > 0 ? 'text-emerald-600' : 'text-muted-foreground'
+                                                }`}>
+                                                {person.netAmount < 0 ? <ArrowDownLeft className="h-3 w-3" /> : person.netAmount > 0 ? <ArrowUpRight className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                                                {person.netAmount < 0 ? 'You Owe' : person.netAmount > 0 ? 'Owes You' : 'Settled'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="text-right">
+                                        <p className="text-lg font-bold">
+                                            <CurrencyDisplay amount={person.netAmount} type={person.netAmount < 0 ? 'expense' : 'income'} />
+                                        </p>
+                                    </div>
+                                </div>
+                            </SwipeableCard>
                         </div>
 
-                        <div className="flex items-center gap-6">
-                            <div className="text-right">
-                                <p className={`text-xl font-bold ${person.netAmount < 0 ? 'text-red-700' : person.netAmount > 0 ? 'text-emerald-700' : 'text-muted-foreground'
+                        {/* DESKTOP ROW (Original) */}
+                        <div
+                            onClick={() => router.push(`/debts/${encodeURIComponent(person.name)}`)}
+                            className="hidden md:flex bg-card hover:bg-muted/40 border border-border rounded-xl p-5 items-center justify-between cursor-pointer transition-all hover:shadow-md group"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className={`h-12 w-12 rounded-full flex items-center justify-center font-bold text-lg ${person.netAmount < 0 ? 'bg-red-100 text-red-600' : person.netAmount > 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-muted text-muted-foreground'
                                     }`}>
-                                    ₹{Math.abs(person.netAmount).toLocaleString()}
-                                </p>
+                                    {person.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">{person.name}</h3>
+                                    <p className={`text-sm font-medium flex items-center gap-1 ${person.netAmount < 0 ? 'text-red-600' : person.netAmount > 0 ? 'text-emerald-600' : 'text-muted-foreground'
+                                        }`}>
+                                        {person.netAmount < 0 ? <ArrowDownLeft className="h-4 w-4" /> : person.netAmount > 0 ? <ArrowUpRight className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                                        {person.netAmount < 0 ? 'You Owe' : person.netAmount > 0 ? 'Owes You' : 'Settled'}
+                                    </p>
+                                </div>
                             </div>
-                            <Button size="sm" className={
-                                person.netAmount < 0 ? 'bg-red-600 hover:bg-red-700' : person.netAmount > 0 ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                            }>
-                                Settle <ChevronRight className="h-4 w-4 ml-1" />
-                            </Button>
+
+                            <div className="flex items-center gap-6">
+                                <div className="text-right">
+                                    <p className="text-xl font-bold">
+                                        <CurrencyDisplay amount={person.netAmount} type={person.netAmount < 0 ? 'expense' : 'income'} />
+                                    </p>
+                                </div>
+                                <Button size="sm" className={
+                                    person.netAmount < 0 ? 'bg-red-600 hover:bg-red-700' : person.netAmount > 0 ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                                }>
+                                    Settle <ChevronRight className="h-4 w-4 ml-1" />
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 ))}

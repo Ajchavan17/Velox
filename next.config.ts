@@ -26,8 +26,34 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "google-fonts",
+          expiration: { maxEntries: 4, maxAgeSeconds: 365 * 24 * 60 * 60 },
+        },
+      },
+      {
+        urlPattern: /^https:\/\/your-asset-domain\.com\/.*/i, // generic placeholder or specific if known
+        handler: "StaleWhileRevalidate",
+        options: {
+          cacheName: "static-resources",
+          expiration: { maxEntries: 50, maxAgeSeconds: 24 * 60 * 60 },
+        },
+      },
+      {
+        urlPattern: /\/api\/(?!auth\/).*/i, // Cache API routes (except auth)
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "api-cache",
+          expiration: { maxEntries: 100, maxAgeSeconds: 24 * 60 * 60 },
+          networkTimeoutSeconds: 10, // Fallback to cache after 10s
+        },
+      },
+    ],
   },
-  // ... other options you like
 });
 
 export default withPWA(nextConfig);

@@ -45,14 +45,37 @@ interface AccountOption {
     bankName: string;
 }
 
+import { useOfflineData } from "@/hooks/useOfflineData";
+
+// ... imports
+
 function TransactionsContent() {
     const { data: session, status } = useSession();
     const searchParams = useSearchParams();
     const router = useRouter();
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+    // Data State
     const [categories, setCategories] = useState<Category[]>([]);
     const [accounts, setAccounts] = useState<AccountOption[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [dateRange, setDateRange] = useState<{ start: string, end: string } | null>(null);
+
+    // Offline Data Hook for Transactions
+    const cacheKey = useMemo(() => dateRange ? `VELOX_TR_CACHE_${dateRange.start}_${dateRange.end}` : 'VELOX_TR_CACHE_DEFAULT', [dateRange]);
+
+    const { data: transactions = [], isLoading: isTransLoading, refresh: refreshTransactions } = useOfflineData<Transaction[]>({
+        key: cacheKey,
+        fetcher: async () => {
+            if (!dateRange) return [];
+            const query = new URLSearchParams();
+            query.append('startDate', dateRange.start);
+            query.append('endDate', dateRange.end);
+            const res = await fetch(`/api/transactions?${query.toString()}`);
+            if (!res.ok) throw new Error('Failed to fetch');
+            return res.json();
+        }
+    });
+
+    const isLoading = isTransLoading; // Alias for compatibility with UI
 
     // View State
     const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
@@ -64,7 +87,6 @@ function TransactionsContent() {
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
     const [selectedAccountId, setSelectedAccountId] = useState('');
     const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
-    const [dateRange, setDateRange] = useState<{ start: string, end: string } | null>(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -78,11 +100,13 @@ function TransactionsContent() {
 
     useEffect(() => {
         if (status === 'authenticated' && dateRange) {
-            fetchTransactions();
+            // Transactions handled by hook
             fetchCategories();
             fetchAccountsData();
+            refreshTransactions(); // Trigger fetch when dateRange is ready/changes (though hook key change also does it, explicit refresh ensures sync with dateRange dependency if needed, but hook key is better)
+            // Actually hook handles key change automatically. But we need to ensure it fetches.
         }
-    }, [status, dateRange]);
+    }, [status, dateRange]); // We keep this for categories/accounts
 
     // Handle Quick Action param
     useEffect(() => {
@@ -164,25 +188,7 @@ function TransactionsContent() {
         }
     };
 
-    const fetchTransactions = async () => {
-        setIsLoading(true);
-        try {
-            const query = new URLSearchParams();
-            if (dateRange) {
-                query.append('startDate', dateRange.start);
-                query.append('endDate', dateRange.end);
-            }
-            const res = await fetch(`/api/transactions?${query.toString()}`);
-            if (res.ok) {
-                const data = await res.json();
-                setTransactions(data);
-            }
-        } catch (error) {
-            console.error('Error fetching transactions:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    // Removed fetchTransactions (handled by hook)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -198,7 +204,7 @@ function TransactionsContent() {
 
             if (res.ok) {
                 toast.success(editingId ? "Transaction updated" : "Transaction added");
-                await fetchTransactions();
+                refreshTransactions(); // Use hook
                 setIsAdding(false);
                 setEditingId(null);
                 setFormData({
@@ -227,7 +233,7 @@ function TransactionsContent() {
             const res = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 toast.success("Transaction deleted");
-                fetchTransactions();
+                refreshTransactions();
             } else {
                 toast.error("Failed to delete");
             }

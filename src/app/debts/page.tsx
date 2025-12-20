@@ -10,10 +10,11 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Plus, Loader2, ArrowUpRight, ArrowDownLeft, Search, ChevronDown, UserPlus, History, WalletCards, ArrowDownCircle, ArrowUpCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { SwipeableCard } from "@/components/ui/SwipeableCard";
+// Removed SwipeableCard import
 import { FloatingActionButton } from "@/components/ui/FloatingActionButton";
 import { DateFilter } from "@/components/dashboard/DateFilter";
 import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { useOfflineData } from "@/hooks/useOfflineData";
 
 interface Debt {
     _id: string;
@@ -46,14 +47,11 @@ function DebtsContent() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [debts, setDebts] = useState<Debt[]>([]);
     const [accounts, setAccounts] = useState<AccountOption[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
 
     // Mobile View State
-    const [activeTab, setActiveTab] = useState<'borrow' | 'lend'>('borrow'); // 'borrow' = Liability (I Owe), 'lend' = Asset (Owed to Me)
-    const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'borrow' | 'lend'>('borrow');
     const [dateRange, setDateRange] = useState<{ start: string, end: string } | null>(null);
 
     // Form State
@@ -66,6 +64,25 @@ function DebtsContent() {
         description: '',
     });
 
+    // Offline Hook
+    const cacheKey = useMemo(() => dateRange ? `VELOX_DEBTS_${dateRange.start}_${dateRange.end}` : 'VELOX_DEBTS_ALL', [dateRange]);
+
+    const { data: debts = [], isLoading: isDebtsLoading, refresh: refreshDebts } = useOfflineData<Debt[]>({
+        key: cacheKey,
+        fetcher: async () => {
+            const query = new URLSearchParams();
+            if (dateRange) {
+                query.append('startDate', dateRange.start);
+                query.append('endDate', dateRange.end);
+            }
+            const res = await fetch(`/api/debts?${query.toString()}`);
+            if (!res.ok) throw new Error('Failed to fetch debts');
+            return res.json();
+        }
+    });
+
+    const isLoading = isDebtsLoading;
+
     // Derived People List for Combobox
     const knownPeople = useMemo(() => {
         const names = new Set(debts.map(d => d.personName));
@@ -75,11 +92,10 @@ function DebtsContent() {
     const [showPersonDropdown, setShowPersonDropdown] = useState(false);
 
     useEffect(() => {
-        if (status === 'authenticated' && dateRange) {
-            fetchDebts();
+        if (status === 'authenticated') {
             fetchAccountsData();
         }
-    }, [status, dateRange]);
+    }, [status]);
 
     // Handle Quick Action param
     useEffect(() => {
@@ -92,18 +108,7 @@ function DebtsContent() {
         }
     }, [searchParams]);
 
-    const fetchDebts = async () => {
-        setIsLoading(true);
-        try {
-            const query = new URLSearchParams();
-            if (dateRange) {
-                query.append('startDate', dateRange.start);
-                query.append('endDate', dateRange.end);
-            }
-            const res = await fetch(`/api/debts?${query.toString()}`);
-            if (res.ok) setDebts(await res.json());
-        } catch (error) { console.error(error); } finally { setIsLoading(false); }
-    };
+    // fetchDebts removed (handled by hook)
 
     const fetchAccountsData = async () => {
         try {
@@ -170,7 +175,7 @@ function DebtsContent() {
             });
             if (res.ok) {
                 toast.success("Record added successfully");
-                fetchDebts();
+                refreshDebts();
                 setIsAdding(false);
                 setFormData({ type: 'borrow', personName: '', amount: '', accountId: '', date: new Date().toISOString().split('T')[0], description: '' });
                 setPersonSearch('');
@@ -251,13 +256,13 @@ function DebtsContent() {
                         </p>
                     </div>
                     <div className="space-y-0.5 border-l border-border/50">
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">You Owe</p>
+                        <p className="text-[10px] uppercase tracking-wider text-red-500 font-semibold">You Owe</p>
                         <p className="text-sm font-bold">
                             <CurrencyDisplay amount={totalLiabilityVal} type="expense" />
                         </p>
                     </div>
                     <div className="space-y-0.5 border-l border-border/50">
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Owed to Me</p>
+                        <p className="text-[10px] uppercase tracking-wider text-emerald-500 font-semibold">Owed to Me</p>
                         <p className="text-sm font-bold">
                             <CurrencyDisplay amount={totalAssetVal} type="income" />
                         </p>
@@ -302,38 +307,29 @@ function DebtsContent() {
                     ) : (
                         <div className="space-y-3">
                             {(activeTab === 'lend' ? assets : liabilities).map((p) => (
-                                <SwipeableCard
+                                <Card
                                     key={p.name}
-                                    id={p.name}
-                                    openId={openSwipeId}
-                                    onSwipeOpen={setOpenSwipeId}
-                                    onEdit={() => router.push(`/debts/${encodeURIComponent(p.name)}`)}
-                                    onDelete={() => toast("Please settle balance to remove.")}
-                                    className="rounded-xl"
+                                    onClick={() => router.push(`/debts/${encodeURIComponent(p.name)}`)}
+                                    className="group relative overflow-hidden border-l-4 transition-all duration-300 hover:shadow-md hover:translate-x-1 active:scale-[0.99] rounded-xl cursor-pointer"
+                                    style={{ borderLeftColor: activeTab === 'lend' ? '#10b981' : '#ef4444' }}
                                 >
-                                    <Card
-                                        onClick={() => router.push(`/debts/${encodeURIComponent(p.name)}`)}
-                                        className="group relative overflow-hidden border-l-4 transition-all duration-300 hover:shadow-md hover:translate-x-1 active:scale-[0.99] rounded-xl cursor-pointer"
-                                        style={{ borderLeftColor: activeTab === 'lend' ? '#10b981' : '#ef4444' }}
-                                    >
-                                        <CardContent className="p-4 flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-lg ${activeTab === 'lend' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
-                                                    {p.name.charAt(0).toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <p className="font-semibold">{p.name}</p>
-                                                    <p className="text-xs text-muted-foreground">Tap for details</p>
-                                                </div>
+                                    <CardContent className="p-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-lg ${activeTab === 'lend' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                                                {p.name.charAt(0).toUpperCase()}
                                             </div>
-                                            <div className="text-right">
-                                                <p className="font-bold text-lg">
-                                                    <CurrencyDisplay amount={p.netAmount} type={activeTab === 'lend' ? 'income' : 'expense'} />
-                                                </p>
+                                            <div>
+                                                <p className="font-semibold">{p.name}</p>
+                                                <p className="text-xs text-muted-foreground">Tap for details</p>
                                             </div>
-                                        </CardContent>
-                                    </Card>
-                                </SwipeableCard>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-lg">
+                                                <CurrencyDisplay amount={p.netAmount} type={activeTab === 'lend' ? 'income' : 'expense'} />
+                                            </p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             ))}
                         </div>
                     )}

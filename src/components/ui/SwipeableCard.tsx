@@ -1,24 +1,30 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Trash2, Edit2 } from "lucide-react";
+import { Trash2, Edit2, CheckCircle2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface SwipeableCardProps {
     children: React.ReactNode;
-    onEdit: () => void;
-    onDelete: () => void;
+    onEdit?: () => void;
+    onDelete?: () => void;
     className?: string; // To merge styles
     id?: string;
     openId?: string | null;
     onSwipeOpen?: (id: string | null) => void;
+    onSettle?: () => void;
 }
 
-export const SwipeableCard = ({ children, onEdit, onDelete, className = "", id, openId, onSwipeOpen }: SwipeableCardProps) => {
+export const SwipeableCard = ({ children, onEdit, onDelete, onSettle, className = "", id, openId, onSwipeOpen }: SwipeableCardProps) => {
     const [offset, setOffset] = useState(0);
     const startX = useRef<number | null>(null);
     const currentOffset = useRef(0);
-    const maxSwipe = 130; // Total width of actions + spacing
+
+    // Calculate max swipe width based on number of active buttons
+    // Button width (40px) + Gap (12px) approx per item
+    const activeButtons = [onSettle, onEdit, onDelete].filter(Boolean).length;
+    const maxSwipe = (activeButtons * 50) + 20; // 50px per button + padding
+
     const isTouching = useRef(false);
 
     // Close if another card is opened (or if openId is cleared), BUT NOT if we are currently touching this one
@@ -87,27 +93,43 @@ export const SwipeableCard = ({ children, onEdit, onDelete, className = "", id, 
     return (
         <div className={`relative overflow-hidden md:overflow-visible ${className}`}>
             {/* Actions Background - Hidden on Desktop */}
-            <div className="absolute inset-y-0 right-0 flex items-center justify-end z-0 pr-4 gap-3 w-[150px] md:hidden">
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        resetSwipe();
-                        onEdit();
-                    }}
-                    className="h-10 w-10 rounded-full bg-yellow-500 text-white flex items-center justify-center shadow-md transition-transform active:scale-95"
-                >
-                    <Edit2 className="h-5 w-5" />
-                </button>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        resetSwipe();
-                        onDelete();
-                    }}
-                    className="h-10 w-10 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md transition-transform active:scale-95"
-                >
-                    <Trash2 className="h-5 w-5" />
-                </button>
+            <div className={`absolute inset-y-0 right-0 flex items-center justify-end z-0 pr-4 gap-3 md:hidden`} style={{ width: maxSwipe + 40 }}>
+                {onSettle && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            resetSwipe();
+                            onSettle();
+                        }}
+                        className="h-10 w-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md transition-transform active:scale-95"
+                    >
+                        <CheckCircle2 className="h-5 w-5" />
+                    </button>
+                )}
+                {onEdit && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            resetSwipe();
+                            onEdit();
+                        }}
+                        className="h-10 w-10 rounded-full bg-yellow-500 text-white flex items-center justify-center shadow-md transition-transform active:scale-95"
+                    >
+                        <Edit2 className="h-5 w-5" />
+                    </button>
+                )}
+                {onDelete && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            resetSwipe();
+                            onDelete();
+                        }}
+                        className="h-10 w-10 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md transition-transform active:scale-95"
+                    >
+                        <Trash2 className="h-5 w-5" />
+                    </button>
+                )}
             </div>
 
             {/* Foreground Content - Transparent on Desktop */}

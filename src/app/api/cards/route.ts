@@ -83,3 +83,41 @@ export async function DELETE(req: Request) {
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+
+export async function PUT(req: Request) {
+    try {
+        const user = await getAuthUser(req);
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const body = await req.json();
+        const { _id, bankName, cardName, last4Digits, creditLimit, currentBalance } = body;
+
+        if (!_id || !bankName || !cardName || !last4Digits) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        await dbConnect();
+        const updatedCard = await CreditCard.findOneAndUpdate(
+            { _id, userId: user.id },
+            {
+                bankName,
+                cardName,
+                last4Digits,
+                creditLimit: Number(creditLimit),
+                currentBalance: Number(currentBalance) || 0,
+            },
+            { new: true }
+        );
+
+        if (!updatedCard) {
+            return NextResponse.json({ error: 'Card not found or unauthorized' }, { status: 404 });
+        }
+
+        return NextResponse.json(updatedCard);
+    } catch (error) {
+        console.error('Error updating card:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
