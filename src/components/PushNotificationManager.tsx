@@ -46,7 +46,7 @@ export function PushNotificationManager() {
                         </p>
                     </div>
                     {subscription ? (
-                        <Button variant="destructive" size="sm" onClick={unsubscribe} className="gap-2">
+                        <Button variant="secondary" size="sm" onClick={unsubscribe} className="gap-2 text-red-500 hover:bg-red-500/10 dark:hover:bg-red-500/20">
                             <BellOff className="h-4 w-4" /> Disable
                         </Button>
                     ) : (
