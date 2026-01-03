@@ -12,7 +12,7 @@ const BankAccountSchema = new mongoose.Schema({
     },
     accountType: {
         type: String,
-        enum: ['Checking', 'Savings', 'Investment', 'Other'],
+        enum: ['Checking', 'Savings', 'Investment', 'Cash', 'Other'],
         default: 'Checking',
     },
     accountName: {
@@ -33,4 +33,11 @@ const BankAccountSchema = new mongoose.Schema({
     },
 });
 
-export default mongoose.models.BankAccount || mongoose.model('BankAccount', BankAccountSchema);
+// Prevent Mongoose model recompilation error in development
+// Delete the existing model if it exists to ensure the new schema (with 'Cash') is applied
+if (mongoose.models.BankAccount) {
+    delete mongoose.models.BankAccount;
+}
+
+const BankAccount = mongoose.model('BankAccount', BankAccountSchema);
+export default BankAccount;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState, useEffect, Suspense, useMemo } from "react";
+import { useState, useEffect, Suspense, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -45,7 +45,7 @@ interface AccountOption {
     bankName: string;
 }
 
-import { useOfflineData } from "@/hooks/useOfflineData";
+
 
 // ... imports
 
@@ -54,28 +54,84 @@ function TransactionsContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    // Data State
+    // State
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [categories, setCategories] = useState<Category[]>([]);
     const [accounts, setAccounts] = useState<AccountOption[]>([]);
     const [dateRange, setDateRange] = useState<{ start: string, end: string } | null>(null);
 
-    // Offline Data Hook for Transactions
-    const cacheKey = useMemo(() => dateRange ? `VELOX_TR_CACHE_${dateRange.start}_${dateRange.end}` : 'VELOX_TR_CACHE_DEFAULT', [dateRange]);
-
-    const { data: transactions = [], isLoading: isTransLoading, refresh: refreshTransactions } = useOfflineData<Transaction[]>({
-        key: cacheKey,
-        fetcher: async () => {
-            if (!dateRange) return [];
+    // Fetch Functions
+    const fetchTransactions = async () => {
+        if (!dateRange) return;
+        setIsLoading(true);
+        try {
             const query = new URLSearchParams();
             query.append('startDate', dateRange.start);
             query.append('endDate', dateRange.end);
             const res = await fetch(`/api/transactions?${query.toString()}`);
-            if (!res.ok) throw new Error('Failed to fetch');
-            return res.json();
+            if (res.ok) {
+                const data = await res.json();
+                setTransactions(data);
+            }
+        } catch (error) {
+            console.error('Error fetching transactions:', error);
+            toast.error("Failed to load transactions");
+        } finally {
+            setIsLoading(false);
         }
-    });
+    };
 
-    const isLoading = isTransLoading; // Alias for compatibility with UI
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch('/api/categories');
+            if (res.ok) setCategories(await res.json());
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
+
+    const fetchAccountsData = async () => {
+        try {
+            const [banksRes, cardsRes] = await Promise.all([
+                fetch('/api/accounts'),
+                fetch('/api/cards')
+            ]);
+
+            let allAccounts: AccountOption[] = [];
+
+            if (banksRes.ok) {
+                const banks = await banksRes.json();
+                allAccounts = [...allAccounts, ...banks.map((b: any) => ({
+                    _id: b._id, name: b.accountName, type: 'bank' as const, bankName: b.bankName
+                }))];
+            }
+            if (cardsRes.ok) {
+                const cards = await cardsRes.json();
+                allAccounts = [...allAccounts, ...cards.map((c: any) => ({
+                    _id: c._id, name: c.cardName, type: 'card' as const, bankName: c.bankName
+                }))];
+            }
+            setAccounts(allAccounts);
+        } catch (error) {
+            console.error('Error fetching accounts:', error);
+        }
+    };
+
+    // Initial Load
+    useEffect(() => {
+        if (status === 'authenticated') {
+            fetchCategories();
+            fetchAccountsData();
+        }
+    }, [status]);
+
+    // Transaction Load
+    useEffect(() => {
+        if (status === 'authenticated' && dateRange) {
+            fetchTransactions();
+        }
+    }, [status, dateRange]);
 
     // View State
     const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
@@ -98,15 +154,7 @@ function TransactionsContent() {
         accountId: '',
     });
 
-    useEffect(() => {
-        if (status === 'authenticated' && dateRange) {
-            // Transactions handled by hook
-            fetchCategories();
-            fetchAccountsData();
-            refreshTransactions(); // Trigger fetch when dateRange is ready/changes (though hook key change also does it, explicit refresh ensures sync with dateRange dependency if needed, but hook key is better)
-            // Actually hook handles key change automatically. But we need to ensure it fetches.
-        }
-    }, [status, dateRange]); // We keep this for categories/accounts
+
 
     // Handle Quick Action param
     useEffect(() => {
@@ -136,57 +184,14 @@ function TransactionsContent() {
         }
     }, [selectedCategory, selectedSubcategory]);
 
+
+
     // Update formData.accountId when selectedAccountId changes
     useEffect(() => {
         setFormData(prev => ({ ...prev, accountId: selectedAccountId }));
     }, [selectedAccountId]);
 
-    const fetchAccountsData = async () => {
-        try {
-            const [banksRes, cardsRes] = await Promise.all([
-                fetch('/api/accounts'),
-                fetch('/api/cards')
-            ]);
 
-            let allAccounts: AccountOption[] = [];
-
-            if (banksRes.ok) {
-                const banks = await banksRes.json();
-                allAccounts = [...allAccounts, ...banks.map((b: any) => ({
-                    _id: b._id,
-                    name: b.accountName,
-                    type: 'bank' as const,
-                    bankName: b.bankName
-                }))];
-            }
-
-            if (cardsRes.ok) {
-                const cards = await cardsRes.json();
-                allAccounts = [...allAccounts, ...cards.map((c: any) => ({
-                    _id: c._id,
-                    name: c.cardName,
-                    type: 'card' as const,
-                    bankName: c.bankName
-                }))];
-            }
-
-            setAccounts(allAccounts);
-        } catch (error) {
-            console.error('Error fetching accounts:', error);
-        }
-    };
-
-    const fetchCategories = async () => {
-        try {
-            const res = await fetch('/api/categories');
-            if (res.ok) {
-                const data = await res.json();
-                setCategories(data);
-            }
-        } catch (error) {
-            console.error('Error fetching categories:', error);
-        }
-    };
 
     // Removed fetchTransactions (handled by hook)
 
@@ -204,7 +209,7 @@ function TransactionsContent() {
 
             if (res.ok) {
                 toast.success(editingId ? "Transaction updated" : "Transaction added");
-                refreshTransactions(); // Use hook
+                fetchTransactions();
                 setIsAdding(false);
                 setEditingId(null);
                 setFormData({
@@ -233,7 +238,7 @@ function TransactionsContent() {
             const res = await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 toast.success("Transaction deleted");
-                refreshTransactions();
+                fetchTransactions();
             } else {
                 toast.error("Failed to delete");
             }

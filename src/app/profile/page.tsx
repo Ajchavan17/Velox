@@ -11,7 +11,22 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/Card";
-import { Plus, CreditCard as CreditCardIcon, Landmark, Loader2, Trash2, Wallet, Pencil, Settings } from "lucide-react";
+import { PushNotificationManager } from "@/components/PushNotificationManager";
+import {
+    Wallet,
+    CreditCard as CreditCardIcon,
+    Plus,
+    Pencil,
+    Trash2,
+    Settings,
+    Landmark,
+    Loader2,
+    X,
+    FolderOpen,
+    ArrowUpRight,
+    WalletCards
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import Link from "next/link";
@@ -47,6 +62,7 @@ interface Category {
 
 export default function ProfilePage() {
     const { data: session, status } = useSession();
+    const router = useRouter();
     const [accounts, setAccounts] = useState<BankAccount[]>([]);
     const [cards, setCards] = useState<CreditCard[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -56,7 +72,7 @@ export default function ProfilePage() {
 
 
     // Mutual exclusive form state
-    const [activeForm, setActiveForm] = useState<'account' | 'card' | 'category' | null>(null);
+    const [activeForm, setActiveForm] = useState<'account' | 'card' | 'category' | 'cash' | null>(null);
 
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
@@ -161,20 +177,32 @@ export default function ProfilePage() {
     const handleAddAccount = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // Ensure bankName is set for Cash accounts if not already
+            const payload = { ...newAccount };
+            if (payload.accountType === 'Cash' && !payload.bankName) {
+                payload.bankName = 'Cash Wallet';
+            }
+
             const res = await fetch('/api/accounts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newAccount),
+                body: JSON.stringify(payload),
             });
+
+            const data = await res.json();
+
             if (res.ok) {
                 await fetchAccounts();
                 setActiveForm(null);
                 setNewAccount({ bankName: '', accountType: 'Checking', accountName: '', balance: '' });
-                toast.success("Bank account added successfully");
+                toast.success(payload.accountType === 'Cash' ? "Cash wallet added details successfully" : "Bank account added successfully");
+            } else {
+                toast.error(data.error || "Failed to add account");
+                console.error('Error adding account:', data.error);
             }
         } catch (error) {
             console.error('Error adding account:', error);
-            toast.error("Failed to add bank account");
+            toast.error("An unexpected error occurred");
         }
     };
 
@@ -359,7 +387,149 @@ export default function ProfilePage() {
                 </div>
             </div>
 
+            {/* Passbook Access Card */}
+            <div onClick={() => router.push('/passbook')} className="cursor-pointer group relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 via-primary/10 to-transparent p-6 shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <WalletCards className="h-24 w-24 text-primary" />
+                </div>
+                <div className="relative z-10 flex items-center justify-between">
+                    <div>
+                        <h3 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent flex items-center gap-2">
+                            Passbook <ArrowUpRight className="h-5 w-5 text-primary" />
+                        </h3>
+                        <p className="text-muted-foreground mt-1 max-w-sm">
+                            View a consolidated summary of all your liquid assets, liabilities, and net worth.
+                        </p>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-300 border border-primary/20">
+                        <WalletCards className="h-6 w-6" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Push Notifications */}
+            <PushNotificationManager />
+
             <div className="grid gap-6 md:gap-8 lg:grid-cols-2">
+                {/* Cash Wallets Section */}
+                <div className="space-y-4 md:space-y-6">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg md:text-xl font-semibold flex items-center gap-2">
+                            <Wallet className="h-5 w-5 text-emerald-500" /> Cash Wallets
+                        </h2>
+                        <Button
+                            variant={activeForm === 'cash' ? "secondary" : "outline"}
+                            size="icon"
+                            onClick={() => {
+                                setActiveForm(activeForm === 'cash' ? null : 'cash');
+                                setNewAccount({ bankName: 'Cash Wallet', accountType: 'Cash', accountName: '', balance: '' });
+                            }}
+                            className={`transition-all ${activeForm === 'cash' ? 'bg-secondary' : ''} h-7 w-7 md:h-9 md:w-9 rounded-full flex items-center justify-center`}
+                        >
+                            <Plus className={`h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 ${activeForm === 'cash' ? 'rotate-45' : ''}`} />
+                        </Button>
+                    </div>
+
+                    {activeForm === 'cash' && (
+                        <Card className="border-emerald-500/50 bg-emerald-500/5 animate-in zoom-in-95 duration-200">
+                            <CardHeader>
+                                <CardTitle className="text-lg">Add Cash Wallet</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleAddAccount} className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs md:text-sm font-medium">Wallet Name</label>
+                                            <Input
+                                                type="text"
+                                                required
+                                                placeholder="e.g. Petty Cash"
+                                                value={newAccount.accountName}
+                                                onChange={(e) => setNewAccount({ ...newAccount, accountName: e.target.value })}
+                                                className="h-10 md:h-12 bg-background md:bg-transparent"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs md:text-sm font-medium">Current Balance (₹)</label>
+                                            <Input
+                                                type="number"
+                                                placeholder="0.00"
+                                                value={newAccount.balance}
+                                                onChange={(e) => setNewAccount({ ...newAccount, balance: e.target.value })}
+                                                className="h-10 md:h-12 bg-background md:bg-transparent"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end pt-2">
+                                        <Button type="submit" className="w-full md:w-auto h-10 md:h-10 bg-emerald-600 hover:bg-emerald-700 text-white">Save Wallet</Button>
+                                    </div>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    <div className="grid gap-3 md:gap-4">
+                        {isLoadingAccounts ? (
+                            <div className="text-center py-4 text-muted-foreground">Loading...</div>
+                        ) : accounts.filter(a => a.accountType === 'Cash').length === 0 ? (
+                            <div className="text-center py-8 border rounded-xl border-dashed bg-muted/20 text-muted-foreground flex flex-col items-center gap-2">
+                                <Wallet className="h-6 w-6 opacity-50" />
+                                <p className="text-sm">No cash wallets.</p>
+                            </div>
+                        ) : (
+                            accounts.filter(a => a.accountType === 'Cash').map((account) => (
+                                <SwipeableCard
+                                    key={account._id}
+                                    id={account._id}
+                                    openId={openSwipeId}
+                                    onSwipeOpen={setOpenSwipeId}
+                                    onEdit={() => setEditingAccount(account)}
+                                    onDelete={() => setDeletingItem({ type: 'account', id: account._id })}
+                                    className="rounded-xl group"
+                                >
+                                    <div className="flex items-center justify-between p-4 border border-emerald-500/20 rounded-xl bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                                                <Wallet className="h-5 w-5" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="font-medium leading-none">{account.accountName}</p>
+                                                <p className="text-sm text-muted-foreground">Cash Wallet</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 md:gap-4 pl-2">
+                                            <div className="text-right transition-transform duration-300 group-hover:-translate-x-24">
+                                                <p className="font-bold md:text-2xl text-emerald-600">
+                                                    <CurrencyDisplay amount={account.balance} />
+                                                </p>
+                                            </div>
+                                            {/* Desktop Hover Action only */}
+                                            <div className="hidden md:flex items-center gap-1 absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full"
+                                                    onClick={(e) => { e.stopPropagation(); setEditingAccount(account); }}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-9 w-9 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-full"
+                                                    onClick={(e) => { e.stopPropagation(); setDeletingItem({ type: 'account', id: account._id }); }}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </SwipeableCard>
+                            ))
+                        )}
+                    </div>
+                </div>
+
                 {/* Bank Accounts Section */}
                 <div className="space-y-4 md:space-y-6">
                     <div className="flex items-center justify-between">
@@ -369,7 +539,10 @@ export default function ProfilePage() {
                         <Button
                             variant={activeForm === 'account' ? "secondary" : "outline"}
                             size="icon"
-                            onClick={() => setActiveForm(activeForm === 'account' ? null : 'account')}
+                            onClick={() => {
+                                setActiveForm(activeForm === 'account' ? null : 'account');
+                                setNewAccount({ bankName: '', accountType: 'Checking', accountName: '', balance: '' });
+                            }}
                             className={`transition-all ${activeForm === 'account' ? 'bg-secondary' : ''} h-7 w-7 md:h-9 md:w-9 rounded-full flex items-center justify-center`}
                         >
                             <Plus className={`h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 ${activeForm === 'account' ? 'rotate-45' : ''}`} />
@@ -446,13 +619,13 @@ export default function ProfilePage() {
                                 <Loader2 className="h-6 w-6 animate-spin" />
                                 <p>Loading accounts...</p>
                             </div>
-                        ) : accounts.length === 0 ? (
+                        ) : accounts.filter(a => a.accountType !== 'Cash').length === 0 ? (
                             <div className="text-center py-12 border rounded-xl border-dashed bg-muted/20 text-muted-foreground flex flex-col items-center gap-2">
                                 <Landmark className="h-8 w-8 opacity-50" />
                                 <p>No bank accounts added yet.</p>
                             </div>
                         ) : (
-                            accounts.map((account) => (
+                            accounts.filter(a => a.accountType !== 'Cash').map((account) => (
                                 <SwipeableCard
                                     key={account._id}
                                     id={account._id}

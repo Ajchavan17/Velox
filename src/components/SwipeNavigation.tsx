@@ -10,7 +10,7 @@ export default function SwipeNavigation() {
     const touchEnd = useRef<number | null>(null);
 
     // Navigation order
-    const navOrder = ['/dashboard', '/transactions', '/debts', '/profile'];
+    const navOrder = ['/dashboard', '/transactions', '/debts', '/loans', '/profile'];
 
     useEffect(() => {
         const handleTouchStart = (e: TouchEvent) => {

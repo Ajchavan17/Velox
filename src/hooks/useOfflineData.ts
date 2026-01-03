@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 interface UseOfflineDataOptions<T> {
@@ -12,6 +12,15 @@ export function useOfflineData<T>({ key, fetcher, initialData, onSuccess }: UseO
     const [data, setData] = useState<T | undefined>(initialData);
     const [isLoading, setIsLoading] = useState(true);
     const [isOffline, setIsOffline] = useState(false);
+
+    // Refs to stabilize dependencies and prevent loops
+    const fetcherRef = useRef(fetcher);
+    const onSuccessRef = useRef(onSuccess);
+
+    useEffect(() => {
+        fetcherRef.current = fetcher;
+        onSuccessRef.current = onSuccess;
+    }, [fetcher, onSuccess]);
 
     // 1. Load from LocalStorage on Mount
     useEffect(() => {
@@ -33,13 +42,13 @@ export function useOfflineData<T>({ key, fetcher, initialData, onSuccess }: UseO
             // But if we have no data, we must show loading
             if (!data) setIsLoading(true);
 
-            const freshData = await fetcher();
+            const freshData = await fetcherRef.current();
 
             setData(freshData);
             localStorage.setItem(key, JSON.stringify(freshData));
             setIsOffline(false);
 
-            if (onSuccess) onSuccess(freshData);
+            if (onSuccessRef.current) onSuccessRef.current(freshData);
 
         } catch (error) {
             console.error(`Fetch failed for ${key}:`, error);
@@ -55,7 +64,7 @@ export function useOfflineData<T>({ key, fetcher, initialData, onSuccess }: UseO
         } finally {
             setIsLoading(false);
         }
-    }, [key, fetcher, data, onSuccess]);
+    }, [key, data]); // fetcher and onSuccess removed from deps
 
     // Initial Fetch
     useEffect(() => {

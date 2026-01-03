@@ -32,14 +32,19 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { bankName, accountType, accountName, balance } = body;
 
-        if (!bankName || !accountName) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        // Validation: For non-Cash accounts, bankName is required. For Cash, we can default it.
+        if (accountType !== 'Cash' && !bankName) {
+            return NextResponse.json({ error: 'Bank name is required' }, { status: 400 });
+        }
+
+        if (!accountName) {
+            return NextResponse.json({ error: 'Account name is required' }, { status: 400 });
         }
 
         await dbConnect();
         const newAccount = await BankAccount.create({
             userId: user.id,
-            bankName,
+            bankName: accountType === 'Cash' ? (bankName || 'Cash Wallet') : bankName,
             accountType,
             accountName,
             balance: Number(balance) || 0,
@@ -48,7 +53,7 @@ export async function POST(req: Request) {
         return NextResponse.json(newAccount, { status: 201 });
     } catch (error) {
         console.error('Error creating account:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: `Internal Server Error: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
     }
 }
 
@@ -93,15 +98,20 @@ export async function PUT(req: Request) {
         const body = await req.json();
         const { _id, bankName, accountType, accountName, balance } = body;
 
-        if (!_id || !bankName || !accountName) {
+        if (!_id || !accountName) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        // For non-Cash, ensure bankName exists
+        if (accountType !== 'Cash' && !bankName) {
+            return NextResponse.json({ error: 'Bank name is required' }, { status: 400 });
         }
 
         await dbConnect();
         const updatedAccount = await BankAccount.findOneAndUpdate(
             { _id, userId: user.id },
             {
-                bankName,
+                bankName: accountType === 'Cash' ? (bankName || 'Cash Wallet') : bankName,
                 accountType,
                 accountName,
                 balance: Number(balance) || 0,
@@ -116,6 +126,6 @@ export async function PUT(req: Request) {
         return NextResponse.json(updatedAccount);
     } catch (error) {
         console.error('Error updating account:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: `Internal Server Error: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
     }
 }
