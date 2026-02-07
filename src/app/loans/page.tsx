@@ -8,12 +8,9 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { useOfflineData } from "@/hooks/useOfflineData";
 import { Plus, Loader2, ArrowUpRight, ArrowDownLeft, Landmark, Percent, Calendar, CheckCircle2 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { calculateEMI } from "@/lib/loanUtils";
-import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
-import { FloatingActionButton } from "@/components/ui/FloatingActionButton";
+import { calculateEMI } from "@/lib/loanUtils"; // We can reuse logic if feasible, or duplicate simple math client side
 
 // Types
 interface Loan {
@@ -40,23 +37,10 @@ interface AccountOption {
 export default function LoansDashboard() {
     const { data: session, status } = useSession();
     const router = useRouter();
-
-    // Offline Data Hook for Loans
-    const { data: loans = [], isLoading: isLoansLoading, refresh: refreshLoans } = useOfflineData<Loan[]>({
-        key: 'VELOX_LOANS_CACHE',
-        fetcher: async () => {
-            const res = await fetch('/api/loans');
-            if (!res.ok) throw new Error('Failed to fetch loans');
-            return res.json();
-        }
-    });
-
+    const [loans, setLoans] = useState<Loan[]>([]);
     const [accounts, setAccounts] = useState<AccountOption[]>([]);
-    // Combined loading state if needed, or just use isLoansLoading for main content
-    const isLoading = isLoansLoading;
-
+    const [isLoading, setIsLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
-    const [view, setView] = useState<'taken' | 'given'>('taken');
 
     // Form State
     const [formData, setFormData] = useState({
@@ -109,12 +93,18 @@ export default function LoansDashboard() {
 
     useEffect(() => {
         if (status === 'authenticated') {
-            // Loans are handled by useOfflineData hook automatically
+            fetchLoans();
             fetchAccounts();
         }
     }, [status]);
 
-    // Removed old fetchLoans
+    const fetchLoans = async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/loans');
+            if (res.ok) setLoans(await res.json());
+        } catch (e) { console.error(e); } finally { setIsLoading(false); }
+    };
 
     const fetchAccounts = async () => {
         try {
@@ -146,7 +136,7 @@ export default function LoansDashboard() {
             if (res.ok) {
                 toast.success("Loan created successfully");
                 setIsAdding(false);
-                refreshLoans(); // Use hook refresh
+                fetchLoans();
                 // Reset Form
                 setFormData({
                     name: '', provider: '', type: 'taken', principalAmount: '', interestRate: '',
@@ -185,7 +175,7 @@ export default function LoansDashboard() {
             });
             if (res.ok) {
                 toast.success("EMI Paid & Recorded!");
-                refreshLoans();
+                fetchLoans();
             } else {
                 toast.error("Payment failed");
             }
@@ -202,103 +192,48 @@ export default function LoansDashboard() {
     if (status === 'loading') return <div className="flex h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
     return (
-        <div className="container mx-auto py-4 md:py-8 px-4 md:px-6 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 md:pb-8">
+        <div className="container mx-auto py-8 px-4 md:px-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="w-full md:w-auto">
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent w-fit">Loans & EMIs</h1>
-                    <p className="text-sm md:text-base text-muted-foreground mt-1">Track your bank loans and lendings.</p>
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent w-fit">Loans & EMIs</h1>
+                    <p className="text-muted-foreground mt-1">Track your bank loans, product EMIs, and lendings.</p>
                 </div>
-                <Button onClick={() => setIsAdding(true)} className="hidden md:flex shadow-lg shadow-primary/20">
+                <Button onClick={() => setIsAdding(true)} className="shadow-lg shadow-primary/20">
                     <Plus className="h-4 w-4 mr-2" /> Add Loan
                 </Button>
             </div>
 
             {/* Quick Stats */}
-            {/* Desktop View: Separate Cards */}
-            <div className="hidden md:grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="bg-card/50 backdrop-blur-sm border-border">
                     <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground uppercase">Monthly EMI Burn</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold">
-                            <CurrencyDisplay amount={monthlyBurn} type="expense" />
-                        </div>
+                        <div className="text-3xl font-bold text-red-500">₹{Math.round(monthlyBurn).toLocaleString()}</div>
                         <p className="text-xs text-muted-foreground mt-1">Total active outgoing EMIs</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-card/50 backdrop-blur-sm border-border">
                     <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground uppercase">Total Loan Liability</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold">
-                            <CurrencyDisplay amount={totalTaken} className="text-foreground" />
-                        </div>
+                        <div className="text-3xl font-bold text-foreground">₹{totalTaken.toLocaleString()}</div>
                         <p className="text-xs text-muted-foreground mt-1">Principal amount borrowed</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-card/50 backdrop-blur-sm border-border">
                     <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground uppercase">Total Lent Assets</CardTitle></CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold">
-                            <CurrencyDisplay amount={totalGiven} type="income" />
-                        </div>
+                        <div className="text-3xl font-bold text-emerald-500">₹{totalGiven.toLocaleString()}</div>
                         <p className="text-xs text-muted-foreground mt-1">Principal amount given</p>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Mobile View: Unified Stats & Toggle */}
-            <div className="md:hidden space-y-6">
-                {/* Unified Stats Row */}
-                <div className="grid grid-cols-3 gap-2 text-center pb-2">
-                    <div className="space-y-0.5">
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Monthly Burn</p>
-                        <p className="text-sm font-bold">
-                            <CurrencyDisplay amount={monthlyBurn} type="expense" />
-                        </p>
-                    </div>
-                    <div className="space-y-0.5 border-l border-border/50">
-                        <p className="text-[10px] uppercase tracking-wider text-red-500 font-semibold">Total Liability</p>
-                        <p className="text-sm font-bold">
-                            <CurrencyDisplay amount={totalTaken} className="text-foreground" />
-                        </p>
-                    </div>
-                    <div className="space-y-0.5 border-l border-border/50">
-                        <p className="text-[10px] uppercase tracking-wider text-emerald-500 font-semibold">Total Assets</p>
-                        <p className="text-sm font-bold">
-                            <CurrencyDisplay amount={totalGiven} type="income" />
-                        </p>
-                    </div>
-                </div>
-
-                {/* Toggle Tabs (Pill Style) */}
-                <div className="flex p-1 bg-muted/30 rounded-full w-full max-w-md mx-auto relative backdrop-blur-sm border border-white/5">
-                    <button
-                        onClick={() => setView('taken')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-full transition-all duration-300 relative z-10 ${view === 'taken'
-                            ? 'bg-red-500/10 text-red-500 shadow-sm ring-1 ring-red-500/20'
-                            : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                    >
-                        <ArrowDownLeft className="h-4 w-4" /> Loans Taken
-                    </button>
-                    <button
-                        onClick={() => setView('given')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-full transition-all duration-300 relative z-10 ${view === 'given'
-                            ? 'bg-emerald-500/10 text-emerald-500 shadow-sm ring-1 ring-emerald-500/20'
-                            : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                    >
-                        <ArrowUpRight className="h-4 w-4" /> Loans Given
-                    </button>
-                </div>
-            </div>
-
             {/* Main Content */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Taken (Liabilities) */}
-                <div className={`space-y-4 ${view === 'given' ? 'hidden md:block' : ''}`}>
-                    <h2 className="text-xl font-semibold flex items-center gap-2 md:hidden"><ArrowDownLeft className="h-5 w-5 text-red-500" /> Loans Taken</h2>
-                    <h2 className="text-xl font-semibold items-center gap-2 hidden md:flex"><ArrowDownLeft className="h-5 w-5 text-red-500" /> Loans Taken</h2>
+                <div className="space-y-4">
+                    <h2 className="text-xl font-semibold flex items-center gap-2"><ArrowDownLeft className="h-5 w-5 text-red-500" /> Loans Taken</h2>
                     {loans.filter(l => l.type === 'taken').map(loan => (
                         <Card
                             key={loan._id}
@@ -309,44 +244,39 @@ export default function LoansDashboard() {
                                 router.push(`/loans/${loan._id}`);
                             }}
                         >
-                            <CardContent className="p-4 md:p-5">
-                                <div className="flex justify-between items-start mb-3 md:mb-4">
+                            <CardContent className="p-5">
+                                <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <h3 className="font-bold text-base md:text-lg group-hover:text-primary transition-colors">{loan.name}</h3>
-                                        <p className="text-xs md:text-sm text-muted-foreground">{loan.provider}</p>
+                                        <h3 className="font-bold text-lg group-hover:text-primary transition-colors">{loan.name}</h3>
+                                        <p className="text-sm text-muted-foreground">{loan.provider}</p>
                                     </div>
                                     <div className="text-right">
-                                        <div className="font-bold text-base md:text-lg">
-                                            <CurrencyDisplay amount={Math.round(loan.emiAmount)} type="expense" />
-                                        </div>
-                                        <div className="text-[10px] md:text-xs text-muted-foreground">Due: {loan.emiDate}th</div>
+                                        <div className="font-bold text-lg text-red-500">₹{Math.round(loan.emiAmount).toLocaleString()}<span className="text-xs text-muted-foreground font-normal">/mo</span></div>
+                                        <div className="text-xs text-muted-foreground">Due: {loan.emiDate}th Day</div>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2 text-xs md:text-sm mb-3 md:mb-4">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Landmark className="h-3 w-3 md:h-4 md:w-4" />
-                                        <CurrencyDisplay amount={loan.principalAmount} className="text-muted-foreground" showSymbol={false} />
-                                    </div>
-                                    <div className="flex items-center gap-2 text-muted-foreground"><Percent className="h-3 w-3 md:h-4 md:w-4" /> {loan.interestRate}%</div>
+                                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                                    <div className="flex items-center gap-2 text-muted-foreground"><Landmark className="h-4 w-4" /> ₹{loan.principalAmount.toLocaleString()} Principal</div>
+                                    <div className="flex items-center gap-2 text-muted-foreground"><Percent className="h-4 w-4" /> {loan.interestRate}% ROI</div>
                                 </div>
 
                                 {/* Active EMI Status */}
-                                <div className="flex items-center justify-between pt-3 md:pt-4 border-t border-border/50">
-                                    <div className="text-[10px] md:text-xs">
-                                        <span className="text-muted-foreground">Next: </span>
+                                <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                                    <div className="text-xs">
+                                        <span className="text-muted-foreground">Next EMI: </span>
                                         <span className="font-medium text-foreground">
                                             {(() => {
                                                 const next = loan.schedule.find((s: any) => s.status === 'pending');
-                                                if (!next) return 'Completed';
-                                                return `${new Date(next.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} (#${next.installmentNo})`;
+                                                if (!next) return 'Generic Completed';
+                                                return `${new Date(next.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} (#${next.installmentNo})`;
                                             })()}
                                         </span>
                                     </div>
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className="h-7 md:h-8 text-xs gap-1 md:gap-2 hover:bg-emerald-500/10 hover:text-emerald-600 hover:border-emerald-500/50 z-10 relative"
+                                        className="h-8 gap-2 hover:bg-emerald-500/10 hover:text-emerald-600 hover:border-emerald-500/50 z-10 relative"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             payEMI(loan);
@@ -364,19 +294,21 @@ export default function LoansDashboard() {
                                             return today < dueDate;
                                         })()}
                                     >
-                                        <CheckCircle2 className="h-3 w-3" /> Pay
+                                        <CheckCircle2 className="h-3 w-3" /> Confirm Paid
                                     </Button>
+                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-primary font-medium flex items-center gap-1">
+                                        View Details <ArrowUpRight className="h-3 w-3" />
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
                     ))}
-                    {loans.filter(l => l.type === 'taken').length === 0 && <div className="p-8 text-center text-muted-foreground border border-dashed rounded-lg bg-muted/20">No active loans.</div>}
+                    {loans.filter(l => l.type === 'taken').length === 0 && <div className="p-8 text-center text-muted-foreground border border-dashed rounded-lg">No active loans.</div>}
                 </div>
 
                 {/* Given (Assets) */}
-                <div className={`space-y-4 ${view === 'taken' ? 'hidden md:block' : ''}`}>
-                    <h2 className="text-xl font-semibold flex items-center gap-2 md:hidden"><ArrowUpRight className="h-5 w-5 text-emerald-500" /> Loans Given</h2>
-                    <h2 className="text-xl font-semibold items-center gap-2 hidden md:flex"><ArrowUpRight className="h-5 w-5 text-emerald-500" /> Loans Given</h2>
+                <div className="space-y-4">
+                    <h2 className="text-xl font-semibold flex items-center gap-2"><ArrowUpRight className="h-5 w-5 text-emerald-500" /> Loans Given</h2>
                     {loans.filter(l => l.type === 'given').map(loan => (
                         <Card
                             key={loan._id}
@@ -386,31 +318,29 @@ export default function LoansDashboard() {
                                 router.push(`/loans/${loan._id}`);
                             }}
                         >
-                            <CardContent className="p-4 md:p-5">
-                                <div className="flex justify-between items-start mb-3 md:mb-4">
+                            <CardContent className="p-5">
+                                <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <h3 className="font-bold text-base md:text-lg group-hover:text-primary transition-colors">{loan.name}</h3>
-                                        <p className="text-xs md:text-sm text-muted-foreground">To: {loan.provider}</p>
+                                        <h3 className="font-bold text-lg group-hover:text-primary transition-colors">{loan.name}</h3>
+                                        <p className="text-sm text-muted-foreground">To: {loan.provider}</p>
                                     </div>
                                     <div className="text-right">
-                                        <div className="font-bold text-base md:text-lg">
-                                            <CurrencyDisplay amount={Math.round(loan.emiAmount)} type="income" />
-                                        </div>
-                                        <div className="text-[10px] md:text-xs text-muted-foreground">Due: {loan.emiDate}th</div>
+                                        <div className="font-bold text-lg text-emerald-500">₹{Math.round(loan.emiAmount).toLocaleString()}<span className="text-xs text-muted-foreground font-normal">/mo</span></div>
+                                        <div className="text-xs text-muted-foreground">Due: {loan.emiDate}th Day</div>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-xs md:text-sm mb-3 md:mb-4">
-                                    <div className="flex items-center gap-2 text-muted-foreground"><Landmark className="h-3 w-3 md:h-4 md:w-4" /> <CurrencyDisplay amount={loan.principalAmount} className="text-muted-foreground" showSymbol={false} /></div>
-                                    <div className="flex items-center gap-2 text-muted-foreground"><Percent className="h-3 w-3 md:h-4 md:w-4" /> {loan.interestRate}%</div>
+                                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                                    <div className="flex items-center gap-2 text-muted-foreground"><Landmark className="h-4 w-4" /> ₹{loan.principalAmount.toLocaleString()} Principal</div>
+                                    <div className="flex items-center gap-2 text-muted-foreground"><Percent className="h-4 w-4" /> {loan.interestRate}% ROI</div>
                                 </div>
-                                <div className="flex items-center justify-between pt-3 md:pt-4 border-t border-border/50">
-                                    <div className="text-[10px] md:text-xs">
-                                        <span className="text-muted-foreground">Next: </span>
+                                <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                                    <div className="text-xs">
+                                        <span className="text-muted-foreground">Next EMI: </span>
                                         <span className="font-medium text-foreground">
                                             {(() => {
                                                 const next = loan.schedule.find((s: any) => s.status === 'pending');
                                                 if (!next) return 'Completed';
-                                                const dateStr = new Date(next.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                                                const dateStr = new Date(next.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
                                                 return `${dateStr} (#${next.installmentNo})`;
                                             })()}
                                         </span>
@@ -418,7 +348,7 @@ export default function LoansDashboard() {
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className="h-7 md:h-8 text-xs gap-1 md:gap-2 hover:bg-emerald-500/10 hover:text-emerald-600 hover:border-emerald-500/50 z-10 relative"
+                                        className="h-8 gap-2 hover:bg-emerald-500/10 hover:text-emerald-600 hover:border-emerald-500/50 z-10 relative"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             payEMI(loan);
@@ -435,21 +365,22 @@ export default function LoansDashboard() {
                                             return today < dueDate;
                                         })()}
                                     >
-                                        <CheckCircle2 className="h-3 w-3" /> Receive
+                                        <CheckCircle2 className="h-3 w-3" /> Confirm Received
                                     </Button>
+                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-xs text-primary font-medium flex items-center gap-1">
+                                        View Details <ArrowUpRight className="h-3 w-3" />
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
                     ))}
-                    {loans.filter(l => l.type === 'given').length === 0 && <div className="p-8 text-center text-muted-foreground border border-dashed rounded-lg bg-muted/20">No active given loans.</div>}
+                    {loans.filter(l => l.type === 'given').length === 0 && <div className="p-8 text-center text-muted-foreground border border-dashed rounded-lg">No active loans given.</div>}
                 </div>
             </div>
 
-            <FloatingActionButton onClick={() => setIsAdding(true)} />
-
             {/* Add Loan Modal */}
             {isAdding && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
                     <Card className="w-full max-w-2xl bg-background border-border shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
                         <CardHeader className="bg-muted/30 pb-4 border-b border-border">
                             <CardTitle>Add New Loan / EMI</CardTitle>

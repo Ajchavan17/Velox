@@ -1,28 +1,28 @@
 import { NextResponse } from 'next/server';
-import { getAuthUser } from '@/lib/getAuthUser';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import Transaction from '@/models/Transaction';
 import User from '@/models/User';
 import BankAccount from '@/models/BankAccount';
 import CreditCard from '@/models/CreditCard';
 import Debt from '@/models/Debt';
-import Loan from '@/models/Loan';
 import mongoose from 'mongoose';
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
-        const user = await getAuthUser(req);
-        if (!user) {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         await dbConnect();
 
-        const userId = new mongoose.Types.ObjectId(user.id);
+        const userId = new mongoose.Types.ObjectId(session.user.id);
 
         // Fetch user preferences (currency)
-        const dbUser = await User.findById(userId).select('currency');
-        const currency = dbUser?.currency || 'INR';
+        const user = await User.findById(userId).select('currency');
+        const currency = user?.currency || 'INR';
 
         // 1. Bank Accounts Total
         const bankAccounts = await BankAccount.find({ userId });
@@ -42,19 +42,6 @@ export async function GET(req: Request) {
             else if (debt.type === 'borrow') totalPayable += debt.amount;
         });
         const netDebtPosition = totalReceivable - totalPayable;
-
-        // 3.5 Active Loans & EMI
-        const activeLoansTaken = await Loan.find({ userId, type: 'taken', status: 'active' });
-        const activeLoansGiven = await Loan.find({ userId, type: 'given', status: 'active' });
-
-        const totalLoanTaken = activeLoansTaken.reduce((sum, loan) => sum + (loan.principalAmount || 0), 0);
-        const totalLoanGiven = activeLoansGiven.reduce((sum, loan) => sum + (loan.principalAmount || 0), 0);
-
-        const activeLoansCount = activeLoansTaken.length + activeLoansGiven.length;
-        // Total monthly outflow (EMI)
-        const totalEmiPayable = activeLoansTaken.reduce((sum, loan) => sum + (loan.emiAmount || 0), 0);
-        // Total monthly inflow (EMI)
-        const totalEmiReceivable = activeLoansGiven.reduce((sum, loan) => sum + (loan.emiAmount || 0), 0);
 
 
         // 4. Aggregation Pipeline for Total Income and Expenses (Existing)
@@ -139,29 +126,28 @@ export async function GET(req: Request) {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const getCategoryStats = async (type: 'income' | 'expense') => {
-            const raw = await Transaction.aggregate([
-                {
-                    $match: {
-                        userId: userId,
-                        type: type,
-                        date: { $gte: thirtyDaysAgo }
-                    }
-                },
-                {
-                    $group: {
-                        _id: "$category",
-                        value: { $sum: "$amount" }
-                    }
-                },
-                { $sort: { value: -1 } },
-                { $limit: 5 } // Top 5 categories
-            ]);
-            return raw.map(item => ({ name: item._id, value: item.value }));
-        };
+        const categoryDataRaw = await Transaction.aggregate([
+            {
+                $match: {
+                    userId: userId,
+                    type: 'expense',
+                    date: { $gte: thirtyDaysAgo }
+                }
+            },
+            {
+                $group: {
+                    _id: "$category",
+                    value: { $sum: "$amount" }
+                }
+            },
+            { $sort: { value: -1 } },
+            { $limit: 5 } // Top 5 categories
+        ]);
 
-        const expenseCategoryData = await getCategoryStats('expense');
-        const incomeCategoryData = await getCategoryStats('income');
+        const categoryData = categoryDataRaw.map(item => ({
+            name: item._id,
+            value: item.value
+        }));
 
 
         return NextResponse.json({
@@ -172,13 +158,6 @@ export async function GET(req: Request) {
             netDebtPosition,
             totalReceivable,
             totalPayable,
-            activeLoansCount,
-            totalEmiPayable,
-            totalEmiReceivable,
-            totalLoanTaken,
-            totalLoanGiven,
-            loanTakenCount: activeLoansTaken.length,
-            loanGivenCount: activeLoansGiven.length,
             // Legacy Stats
             totalIncome: stats.totalIncome,
             totalExpenses: stats.totalExpenses,
@@ -189,9 +168,7 @@ export async function GET(req: Request) {
             recentTransactions,
             // Charts
             chartData,
-            categoryData: expenseCategoryData, // Keep backward compatibility for now if needed, or just switch
-            expenseCategoryData,
-            incomeCategoryData
+            categoryData
         });
 
     } catch (error) {

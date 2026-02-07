@@ -63,7 +63,7 @@ export default function Header() {
 
     return (
         <>
-            <header className="border-b border-border/40 bg-background/80 backdrop-blur-xl sticky top-0 z-50 hidden md:flex">
+            <header className="border-b border-border/40 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
                 <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
                     <div className="flex items-center gap-2">
                         {/* Mobile Menu Toggle */}

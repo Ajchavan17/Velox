@@ -7,7 +7,6 @@ declare module "next-auth" {
       id: string
       plan?: string
       subscriptionStatus?: string
-      currency?: string
     } & DefaultSession["user"]
   }
 
@@ -15,7 +14,6 @@ declare module "next-auth" {
     id: string
     plan?: string
     subscriptionStatus?: string
-    currency?: string
   }
 }
 
@@ -24,6 +22,5 @@ declare module "next-auth/jwt" {
     id: string
     plan?: string
     subscriptionStatus?: string
-    currency?: string
   }
 }

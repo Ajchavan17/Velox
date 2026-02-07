@@ -15,16 +15,23 @@ export interface SelectProps {
     className?: string
     disabled?: boolean
     id?: string
-    align?: 'start' | 'end'
-    variant?: 'default' | 'ghost'
 }
 
-export function Select({ options, value, onChange, placeholder = "Select...", className, disabled, id, align = 'start', variant = 'default' }: SelectProps) {
+export function Select({ options, value, onChange, placeholder = "Select...", className, disabled, id }: SelectProps) {
     const [isOpen, setIsOpen] = React.useState(false)
     const containerRef = React.useRef<HTMLDivElement>(null)
 
     React.useEffect(() => {
-        // ... existing useEffect ...
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, []);
 
     const selectedOption = options.find(o => o.value === value)
@@ -33,9 +40,8 @@ export function Select({ options, value, onChange, placeholder = "Select...", cl
         <div className={cn("relative", className)} ref={containerRef}>
             <div
                 className={cn(
-                    "flex h-10 w-full items-center justify-between rounded-md text-sm transition-colors cursor-pointer",
-                    variant === 'default' ? "border border-input bg-background px-3 py-2 shadow-sm ring-offset-background" : "hover:bg-accent hover:text-accent-foreground px-2 py-2",
-                    isOpen && variant === 'default' ? "border-primary" : "",
+                    "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50 transition-colors cursor-pointer",
+                    isOpen ? "border-primary" : "",
                     disabled ? "opacity-50 cursor-not-allowed" : ""
                 )}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -48,10 +54,7 @@ export function Select({ options, value, onChange, placeholder = "Select...", cl
             </div>
 
             {isOpen && (
-                <div className={cn(
-                    "absolute top-full z-[100] mt-1 w-full min-w-[max-content] rounded-md border border-input bg-background text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 max-h-60 overflow-auto",
-                    align === 'end' ? 'right-0' : 'left-0'
-                )}>
+                <div className="absolute top-full left-0 z-[100] mt-1 w-full rounded-md border border-input bg-background text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 max-h-60 overflow-auto">
                     <div className="p-1">
                         {options.map((option) => (
                             <div

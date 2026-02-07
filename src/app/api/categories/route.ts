@@ -1,34 +1,31 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
-import { getAuthUser } from '@/lib/getAuthUser';
-
-import mongoose from 'mongoose';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export async function GET(req: Request) {
     try {
-        const user = await getAuthUser(req);
+        const session = await getServerSession(authOptions);
 
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!session || !session.user) {
+            return new NextResponse('Unauthorized', { status: 401 });
         }
 
         await dbConnect();
-        const userId = new mongoose.Types.ObjectId(user.id);
-        const dbUser = await User.findById(userId).orFail().select('categories');
+        const user = await User.findById(session.user.id).select('categories');
 
-        return NextResponse.json(dbUser.categories);
+        return NextResponse.json(user.categories);
     } catch (error) {
-        console.error('Error fetching categories:', error);
-        return NextResponse.json({ error: `Internal Server Error: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
+        return new NextResponse('Internal Error', { status: 500 });
     }
 }
 
 export async function POST(req: Request) {
     try {
-        const authUser = await getAuthUser(req);
+        const session = await getServerSession(authOptions);
 
-        if (!authUser) {
+        if (!session || !session.user) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
@@ -41,7 +38,7 @@ export async function POST(req: Request) {
 
         await dbConnect();
 
-        const user = await User.findById(authUser.id);
+        const user = await User.findById(session.user.id);
 
         if (!user) {
             return new NextResponse('User not found', { status: 404 });
@@ -65,8 +62,8 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
     try {
-        const authUser = await getAuthUser(req);
-        if (!authUser) {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
@@ -78,7 +75,7 @@ export async function DELETE(req: Request) {
         }
 
         await dbConnect();
-        const user = await User.findById(authUser.id);
+        const user = await User.findById(session.user.id);
 
         if (!user) {
             return new NextResponse('User not found', { status: 404 });
@@ -97,8 +94,8 @@ export async function DELETE(req: Request) {
 
 export async function PUT(req: Request) {
     try {
-        const authUser = await getAuthUser(req);
-        if (!authUser) {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
@@ -110,7 +107,7 @@ export async function PUT(req: Request) {
         }
 
         await dbConnect();
-        const user = await User.findById(authUser.id);
+        const user = await User.findById(session.user.id);
 
         if (!user) {
             return new NextResponse('User not found', { status: 404 });

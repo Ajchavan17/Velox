@@ -1,32 +1,20 @@
 import { NextResponse } from 'next/server';
-import { getAuthSession } from '@/lib/auth-helper'; // Custom helper
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/db';
 import Debt from '@/models/Debt';
 import User from '@/models/User';
 import { updateAccountBalance } from '@/lib/accountUtils';
 
-export async function GET(req: Request) {
+export async function GET() {
     try {
-        const session = await getAuthSession(req);
+        const session = await getServerSession(authOptions);
         if (!session || !session.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { searchParams } = new URL(req.url);
-        const startDate = searchParams.get('startDate');
-        const endDate = searchParams.get('endDate');
-
-        let query: any = { userId: session.user.id };
-
-        if (startDate && endDate) {
-            query.date = {
-                $gte: new Date(startDate),
-                $lte: new Date(endDate)
-            };
-        }
-
         await dbConnect();
-        const debts = await Debt.find(query).sort({ createdAt: -1 });
+        const debts = await Debt.find({ userId: session.user.id }).sort({ createdAt: -1 });
 
         return NextResponse.json(debts);
     } catch (error) {
@@ -37,7 +25,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const session = await getAuthSession(req);
+        const session = await getServerSession(authOptions);
         if (!session || !session.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }

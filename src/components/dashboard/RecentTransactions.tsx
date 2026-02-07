@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { format } from "date-fns";
-import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface Transaction {
     _id: string;
@@ -20,17 +19,22 @@ interface RecentTransactionsProps {
 
 export const RecentTransactions = ({ transactions, currency = 'INR' }: RecentTransactionsProps) => {
     // Currency formatter
-    // Currency formatter logic moved to CurrencyDisplay component
+    const formatAmount = (amount: number) => {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: currency,
+            maximumFractionDigits: 0
+        }).format(amount);
+    };
 
     return (
         <Card className="glass-card border-primary/20 h-full">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                    Recent Activity
+                    <Link href="/transactions" className="hover:text-primary transition-colors cursor-pointer">
+                        Recent Activity
+                    </Link>
                 </CardTitle>
-                <Link href="/transactions" className="text-xs text-primary hover:text-primary/80 transition-colors font-medium">
-                    View All
-                </Link>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -54,8 +58,8 @@ export const RecentTransactions = ({ transactions, currency = 'INR' }: RecentTra
                                         </p>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <CurrencyDisplay amount={t.amount} type={t.type} className="text-sm font-bold" />
+                                <div className={`text-sm font-bold whitespace-nowrap ml-auto ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                    {t.type === 'income' ? '+' : '-'} {formatAmount(t.amount)}
                                 </div>
                             </div>
                         ))

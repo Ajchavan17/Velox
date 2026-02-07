@@ -24,7 +24,7 @@ export default function ThemeSelector() {
     ];
 
     return (
-        <div className="grid grid-cols-3 gap-2 md:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {themes.map((t) => {
                 const Icon = t.icon;
                 const isActive = theme === t.id;

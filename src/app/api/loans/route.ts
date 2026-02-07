@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Loan from '@/models/Loan';
-import { getAuthSession } from '@/lib/auth-helper';
+import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
 import { generateAmortizationSchedule, calculateEMI } from '@/lib/loanUtils';
 
 export async function GET(req: Request) {
     try {
         await dbConnect();
-        const session = await getAuthSession(req);
+        const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const loans = await Loan.find({ userId: session.user.id }).sort({ createdAt: -1 });
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         await dbConnect();
-        const session = await getAuthSession(req);
+        const session = await getServerSession(authOptions);
         if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const body = await req.json();
