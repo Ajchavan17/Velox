@@ -1,30 +1,31 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 import dbConnect from '@/lib/db';
 import CreditCard from '@/models/CreditCard';
 
-export async function GET() {
+import mongoose from 'mongoose';
+
+export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         await dbConnect();
-        const cards = await CreditCard.find({ userId: session.user.id }).sort({ createdAt: -1 });
+        const cards = await CreditCard.find({ userId: new mongoose.Types.ObjectId(user.id) }).sort({ createdAt: -1 });
 
         return NextResponse.json(cards);
     } catch (error) {
         console.error('Error fetching cards:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: `Internal Server Error: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
     }
 }
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
 
         await dbConnect();
         const newCard = await CreditCard.create({
-            userId: session.user.id,
+            userId: user.id,
             bankName,
             cardName,
             last4Digits,
@@ -54,8 +55,8 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -69,7 +70,7 @@ export async function DELETE(req: Request) {
         await dbConnect();
         const deletedCard = await CreditCard.findOneAndDelete({
             _id: id,
-            userId: session.user.id,
+            userId: user.id,
         });
 
         if (!deletedCard) {
@@ -79,6 +80,44 @@ export async function DELETE(req: Request) {
         return NextResponse.json({ message: 'Card deleted successfully' });
     } catch (error) {
         console.error('Error deleting card:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
+
+export async function PUT(req: Request) {
+    try {
+        const user = await getAuthUser(req);
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const body = await req.json();
+        const { _id, bankName, cardName, last4Digits, creditLimit, currentBalance } = body;
+
+        if (!_id || !bankName || !cardName || !last4Digits) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        await dbConnect();
+        const updatedCard = await CreditCard.findOneAndUpdate(
+            { _id, userId: user.id },
+            {
+                bankName,
+                cardName,
+                last4Digits,
+                creditLimit: Number(creditLimit),
+                currentBalance: Number(currentBalance) || 0,
+            },
+            { new: true }
+        );
+
+        if (!updatedCard) {
+            return NextResponse.json({ error: 'Card not found or unauthorized' }, { status: 404 });
+        }
+
+        return NextResponse.json(updatedCard);
+    } catch (error) {
+        console.error('Error updating card:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 import dbConnect from '@/lib/db';
 import Transaction from '@/models/Transaction';
 import { updateAccountBalance } from '@/lib/accountUtils';
 
 export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -17,10 +16,19 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const limit = searchParams.get('limit');
         const type = searchParams.get('type');
+        const startDate = searchParams.get('startDate');
+        const endDate = searchParams.get('endDate');
 
-        let query: any = { userId: session.user.id };
+        let query: any = { userId: user.id };
         if (type && type !== 'all') {
             query.type = type;
+        }
+
+        if (startDate && endDate) {
+            query.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
         }
 
         let transactionsQuery = Transaction.find(query).sort({ date: -1 });
@@ -40,8 +48,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -54,7 +62,7 @@ export async function POST(req: Request) {
 
         await dbConnect();
         const newTransaction = await Transaction.create({
-            userId: session.user.id,
+            userId: user.id,
             amount: Number(amount),
             type,
             category,
@@ -64,7 +72,7 @@ export async function POST(req: Request) {
         });
 
         if (accountId) {
-            await updateAccountBalance(session.user.id, accountId, Number(amount), type);
+            await updateAccountBalance(user.id, accountId, Number(amount), type);
         }
 
         return NextResponse.json(newTransaction, { status: 201 });

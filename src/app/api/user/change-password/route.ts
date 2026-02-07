@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const userAuth = await getAuthUser(req);
 
-        if (!session) {
+        if (!userAuth) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
@@ -24,7 +23,7 @@ export async function POST(req: Request) {
 
         await dbConnect();
 
-        const user = await User.findById(session.user.id).select('+password');
+        const user = await User.findById(userAuth.id).select('+password');
 
         if (!user) {
             return NextResponse.json({ message: 'User not found' }, { status: 404 });
@@ -54,7 +53,7 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error('Change password error:', error);
         return NextResponse.json(
-            { message: 'Internal server error' },
+            { message: `Internal server error: ${error instanceof Error ? error.message : String(error)}` },
             { status: 500 }
         );
     }

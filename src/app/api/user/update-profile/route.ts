@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 import dbConnect from '@/lib/db';
 import User from '@/models/User';
 
 export async function PATCH(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const userAuth = await getAuthUser(req);
 
-        if (!session) {
+        if (!userAuth) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
@@ -29,7 +28,7 @@ export async function PATCH(req: Request) {
         }
 
         const user = await User.findByIdAndUpdate(
-            session.user.id,
+            userAuth.id,
             updateData,
             { new: true }
         );
@@ -42,7 +41,7 @@ export async function PATCH(req: Request) {
     } catch (error: any) {
         console.error('Update profile error:', error);
         return NextResponse.json(
-            { message: 'Internal server error' },
+            { message: `Internal server error: ${error instanceof Error ? error.message : String(error)}` },
             { status: 500 }
         );
     }

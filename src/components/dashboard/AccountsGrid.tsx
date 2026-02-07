@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/Card";
 import { Landmark, CreditCard, Wallet } from "lucide-react";
 import { useRouter } from 'next/navigation';
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
 
 interface Account {
     _id: string;
@@ -34,7 +35,12 @@ export const AccountsGrid = ({ accounts = [], cards = [], currency }: AccountsGr
                     <Wallet className="h-5 w-5 text-primary" /> Accounts & Cards
                 </h3>
                 {/* Horizontal Scroll Container */}
-                <div className="flex gap-4 overflow-x-auto pb-4 px-1 scrollbar-hide -mx-1 snap-x">
+                <div
+                    className="flex gap-4 overflow-x-auto pb-4 px-1 no-scrollbar -mx-1 snap-x"
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                >
 
                     {/* Bank Accounts */}
                     {accounts.map((acc) => (
@@ -56,10 +62,8 @@ export const AccountsGrid = ({ accounts = [], cards = [], currency }: AccountsGr
                                     </div>
                                     <div>
                                         <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Available Balance</p>
-                                        <p className={`text-2xl font-bold ${acc.balance > 0 ? "text-emerald-500" :
-                                            acc.balance < 0 ? "text-red-500" : "text-foreground"
-                                            }`}>
-                                            ₹{acc.balance.toLocaleString()}
+                                        <p className="text-2xl font-bold">
+                                            <CurrencyDisplay amount={acc.balance} />
                                         </p>
                                     </div>
                                 </CardContent>
@@ -94,9 +98,11 @@ export const AccountsGrid = ({ accounts = [], cards = [], currency }: AccountsGr
                                             <div className="flex justify-between items-end">
                                                 <div>
                                                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Current Due</p>
-                                                    <p className={`text-2xl font-bold ${card.currentBalance > 0 ? "text-red-500" : "text-foreground"
-                                                        }`}>
-                                                        ₹{card.currentBalance.toLocaleString()}
+                                                    <p className="text-2xl font-bold">
+                                                        <CurrencyDisplay
+                                                            amount={card.currentBalance}
+                                                            type={card.currentBalance > 0 ? 'expense' : 'neutral'}
+                                                        />
                                                     </p>
                                                 </div>
                                                 <div className="text-right">

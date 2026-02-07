@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import { Loader2, ArrowLeft, ArrowUpCircle, ArrowDownCircle, Filter, Calendar, CheckCircle2, History } from "lucide-react";
+import { CurrencyDisplay } from "@/components/ui/CurrencyDisplay";
+import { useOfflineData } from "@/hooks/useOfflineData";
 
 interface Debt {
     _id: string;
@@ -38,21 +40,21 @@ interface TimelineEvent {
 export default function DebtHistoryPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const [debts, setDebts] = useState<Debt[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [selectedPerson, setSelectedPerson] = useState<string>('all');
 
-    useEffect(() => {
-        if (status === 'authenticated') fetchDebts();
-    }, [status]);
-
-    const fetchDebts = async () => {
-        setIsLoading(true);
-        try {
+    // Offline Hook
+    const { data: debts = [], isLoading: isDebtsLoading } = useOfflineData<Debt[]>({
+        key: 'VELOX_DEBTS_ALL',
+        fetcher: async () => {
             const res = await fetch('/api/debts');
-            if (res.ok) setDebts(await res.json());
-        } catch (error) { console.error(error); } finally { setIsLoading(false); }
-    };
+            if (!res.ok) throw new Error('Failed to fetch debts');
+            return res.json();
+        }
+    });
+
+    const isLoading = isDebtsLoading;
+
+    // fetchDebts removed
 
     // 1. Extract Unique People
     const people = useMemo(() => {
@@ -146,15 +148,32 @@ export default function DebtHistoryPage() {
         <div className="container mx-auto py-8 px-4 md:px-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Breadcrumbs & Header */}
             <div className="flex flex-col gap-4">
-                <div className="flex items-center text-sm text-muted-foreground gap-2">
-                    <Link href="/debts" className="hover:text-primary transition-colors">Debt/Lent</Link>
-                    <span>/</span>
-                    <span className="text-foreground font-medium">History</span>
-                </div>
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <h1 className="text-3xl font-bold tracking-tight">Transaction History</h1>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center text-sm text-muted-foreground gap-2">
+                        <Link href="/debts" className="hover:text-primary transition-colors">Debt/Lent</Link>
+                        <span>/</span>
+                        <span className="text-foreground font-medium">History</span>
+                    </div>
 
-                    {/* Filter */}
+                    {/* Mobile Filter: Inline with Breadcrumbs */}
+                    <div className="flex items-center gap-1 md:hidden">
+                        <Filter className="h-3 w-3 text-muted-foreground" />
+                        <Select
+                            value={selectedPerson}
+                            onChange={(val) => setSelectedPerson(val)}
+                            options={[
+                                { label: 'All', value: 'all' },
+                                ...people.map(p => ({ label: p, value: p }))
+                            ]}
+                            variant="ghost"
+                            className="border-0 shadow-none bg-transparent focus:ring-0 px-0 h-auto py-0 text-sm w-[100px] text-right"
+                        />
+                    </div>
+                </div>
+
+                {/* Desktop Header: Original */}
+                <div className="hidden md:flex items-center justify-between gap-4">
+                    <h1 className="text-3xl font-bold tracking-tight">Transaction History</h1>
                     <div className="flex items-center gap-3 bg-card border border-border px-3 py-1.5 rounded-lg shadow-sm">
                         <Filter className="h-4 w-4 text-muted-foreground" />
                         <div className="min-w-[150px]">
@@ -174,39 +193,113 @@ export default function DebtHistoryPage() {
 
             {/* Analytics Summary */}
             <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-6 rounded-xl bg-red-50 border border-red-100 flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-red-600/80 uppercase tracking-wider">Total Outstanding Need to Pay</p>
-                            <p className="text-3xl font-bold text-red-700 mt-2">₹{stats.outstandingPayable.toLocaleString()}</p>
+                {/* Mobile Stats (Split Layout) */}
+                <div className="md:hidden space-y-3">
+                    {/* Top Row: Need to Pay | To Receive */}
+                    <Card className="bg-card/50 backdrop-blur-sm border-border p-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="text-center border-r border-border/50 pr-2">
+                                <p className="text-[10px] font-medium text-red-500/80 uppercase tracking-wider truncate">Need to Pay</p>
+                                <p className="text-lg font-bold mt-1">
+                                    <CurrencyDisplay amount={stats.outstandingPayable} type="expense" />
+                                </p>
+                            </div>
+                            <div className="text-center pl-2">
+                                <p className="text-[10px] font-medium text-emerald-500/80 uppercase tracking-wider truncate">To Receive</p>
+                                <p className="text-lg font-bold mt-1">
+                                    <CurrencyDisplay amount={stats.outstandingReceivable} type="income" />
+                                </p>
+                            </div>
                         </div>
-                        <ArrowDownCircle className="h-10 w-10 text-red-300" />
-                    </div>
-                    <div className="p-6 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-emerald-600/80 uppercase tracking-wider">Total Outstanding to Receive</p>
-                            <p className="text-3xl font-bold text-emerald-700 mt-2">₹{stats.outstandingReceivable.toLocaleString()}</p>
+                    </Card>
+
+                    {/* Bottom Row: Others (Single Row Grid) */}
+                    <Card className="bg-card/50 backdrop-blur-sm border-border">
+                        <div className="grid grid-cols-4 gap-1 p-3 items-center text-center">
+                            {/* Total Borrowed */}
+                            <div className="border-r border-border/50">
+                                <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider truncate px-1">Borrowed</p>
+                                <p className="text-xs font-bold mt-1">
+                                    <CurrencyDisplay amount={stats.borrowed} type="neutral" />
+                                </p>
+                            </div>
+                            {/* Repaid by Me */}
+                            <div className="border-r border-border/50">
+                                <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider truncate px-1">Pd (Me)</p>
+                                <p className="text-xs font-bold mt-1">
+                                    <CurrencyDisplay amount={stats.repaidByMe} type="expense" />
+                                </p>
+                            </div>
+                            {/* Total Lent */}
+                            <div className="border-r border-border/50">
+                                <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider truncate px-1">Lent</p>
+                                <p className="text-xs font-bold mt-1">
+                                    <CurrencyDisplay amount={stats.lent} type="neutral" />
+                                </p>
+                            </div>
+                            {/* Repaid to Me */}
+                            <div>
+                                <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider truncate px-1">Pd (You)</p>
+                                <p className="text-xs font-bold mt-1">
+                                    <CurrencyDisplay amount={stats.repaidToMe} type="income" />
+                                </p>
+                            </div>
                         </div>
-                        <ArrowUpCircle className="h-10 w-10 text-emerald-300" />
-                    </div>
+                    </Card>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="p-4 rounded-xl bg-card border border-border">
-                        <p className="text-xs text-muted-foreground uppercase font-semibold">Total Borrowed</p>
-                        <p className="text-lg font-bold">₹{stats.borrowed.toLocaleString()}</p>
+                {/* Desktop Stats (Original Grid) */}
+                <div className="hidden md:block space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-6 rounded-xl bg-card border border-border flex items-center justify-between shadow-sm">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Outstanding Need to Pay</p>
+                                <p className="text-3xl font-bold mt-2">
+                                    <CurrencyDisplay amount={stats.outstandingPayable} type="expense" />
+                                </p>
+                            </div>
+                            <div className="h-14 w-14 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                                <ArrowDownCircle className="h-8 w-8" />
+                            </div>
+                        </div>
+                        <div className="p-6 rounded-xl bg-card border border-border flex items-center justify-between shadow-sm">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Outstanding to Receive</p>
+                                <p className="text-3xl font-bold mt-2">
+                                    <CurrencyDisplay amount={stats.outstandingReceivable} type="income" />
+                                </p>
+                            </div>
+                            <div className="h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                <ArrowUpCircle className="h-8 w-8" />
+                            </div>
+                        </div>
                     </div>
-                    <div className="p-4 rounded-xl bg-card border border-border">
-                        <p className="text-xs text-muted-foreground uppercase font-semibold">Repaid by Me</p>
-                        <p className="text-lg font-bold text-emerald-600">₹{stats.repaidByMe.toLocaleString()}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-card border border-border">
-                        <p className="text-xs text-muted-foreground uppercase font-semibold">Total Lent</p>
-                        <p className="text-lg font-bold">₹{stats.lent.toLocaleString()}</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-card border border-border">
-                        <p className="text-xs text-muted-foreground uppercase font-semibold">Repaid to Me</p>
-                        <p className="text-lg font-bold text-emerald-600">₹{stats.repaidToMe.toLocaleString()}</p>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="p-4 rounded-xl bg-card border border-border">
+                            <p className="text-xs text-muted-foreground uppercase font-semibold">Total Borrowed</p>
+                            <p className="text-lg font-bold">
+                                <CurrencyDisplay amount={stats.borrowed} type="neutral" />
+                            </p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-card border border-border">
+                            <p className="text-xs text-muted-foreground uppercase font-semibold">Repaid by Me</p>
+                            <p className="text-lg font-bold">
+                                <CurrencyDisplay amount={stats.repaidByMe} type="expense" />
+                            </p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-card border border-border">
+                            <p className="text-xs text-muted-foreground uppercase font-semibold">Total Lent</p>
+                            <p className="text-lg font-bold">
+                                <CurrencyDisplay amount={stats.lent} type="neutral" />
+                            </p>
+                        </div>
+                        <div className="p-4 rounded-xl bg-card border border-border">
+                            <p className="text-xs text-muted-foreground uppercase font-semibold">Repaid to Me</p>
+                            <p className="text-lg font-bold">
+                                <CurrencyDisplay amount={stats.repaidToMe} type="income" />
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -216,47 +309,95 @@ export default function DebtHistoryPage() {
                 {timeline.length === 0 && <div className="text-center py-10 text-muted-foreground border border-dashed rounded-xl">No history found.</div>}
 
                 {timeline.map(event => (
-                    <div
-                        key={event.id}
-                        className="bg-card hover:bg-muted/40 border border-border rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all hover:shadow-sm group"
-                    >
-                        {/* Icon */}
-                        <div className={`p-3 rounded-full shrink-0 ${event.type.includes('borrow') ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
-                            }`}>
-                            {event.type.startsWith('create') ? (
-                                event.type === 'create_borrow' ? <ArrowDownCircle className="h-5 w-5" /> : <ArrowUpCircle className="h-5 w-5" />
-                            ) : (
-                                <CheckCircle2 className="h-5 w-5" />
-                            )}
+                    <div key={event.id}>
+                        {/* MOBILE CARD */}
+                        <div className="md:hidden mb-3">
+                            <div
+                                onClick={() => router.push(`/debts/${encodeURIComponent(event.personName)}`)}
+                                className="relative overflow-hidden rounded-xl border border-border/40 bg-background/60 backdrop-blur-md p-4 shadow-sm border-l-4 cursor-pointer active:scale-[0.98] transition-all"
+                                style={{ borderLeftColor: event.type.includes('borrow') ? '#ef4444' : '#10b981' }}
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-full shrink-0 ${event.type.includes('borrow') ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                            {event.type.startsWith('create') ? (
+                                                event.type === 'create_borrow' ? <ArrowDownCircle className="h-5 w-5" /> : <ArrowUpCircle className="h-5 w-5" />
+                                            ) : (
+                                                <CheckCircle2 className="h-5 w-5" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-sm">
+                                                {event.personName}
+                                            </p>
+                                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                                                <span className={event.type.includes('borrow') ? "text-red-500/80 font-medium" : "text-emerald-500/80 font-medium"}>
+                                                    {event.type === 'create_borrow' && 'Borrowed'}
+                                                    {event.type === 'create_lend' && 'Lent'}
+                                                    {event.type === 'settle_borrow' && 'Repaid'}
+                                                    {event.type === 'settle_lend' && 'Received'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-base font-bold">
+                                            <CurrencyDisplay
+                                                amount={event.amount}
+                                                type={event.type.includes('borrow') ? 'expense' : 'income'}
+                                            />
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground mt-0.5">{event.date.toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Details */}
-                        <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                                <span className="font-semibold">
-                                    {event.type === 'create_borrow' && 'Borrowed from'}
-                                    {event.type === 'create_lend' && 'Lent to'}
-                                    {event.type === 'settle_borrow' && 'Repayment to'}
-                                    {event.type === 'settle_lend' && 'Payment from'}
-                                    <span className="ml-1 text-primary">{event.personName}</span>
-                                </span>
-                                {event.type.startsWith('settle') && (
-                                    <span className="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">SETTLEMENT</span>
+                        {/* DESKTOP CARD (Original) */}
+                        <div
+                            onClick={() => router.push(`/debts/${encodeURIComponent(event.personName)}`)}
+                            className="hidden md:flex bg-card hover:bg-muted/40 border border-border rounded-xl p-4 flex-col sm:flex-row items-start sm:items-center gap-4 transition-all hover:shadow-sm group cursor-pointer"
+                        >
+                            {/* Icon */}
+                            <div className={`p-3 rounded-full shrink-0 ${event.type.includes('borrow') ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'
+                                }`}>
+                                {event.type.startsWith('create') ? (
+                                    event.type === 'create_borrow' ? <ArrowDownCircle className="h-5 w-5" /> : <ArrowUpCircle className="h-5 w-5" />
+                                ) : (
+                                    <CheckCircle2 className="h-5 w-5" />
                                 )}
                             </div>
-                            <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                <Calendar className="h-3 w-3" /> {event.date.toLocaleDateString()}
-                                {event.description && <span className="text-muted-foreground/60">• {event.description}</span>}
-                            </p>
-                        </div>
 
-                        {/* Amount */}
-                        <div className="text-right">
-                            <p className={`text-lg font-bold ${event.type.includes('borrow') ? 'text-red-600' : 'text-emerald-600'
-                                }`}>
-                                {event.type.startsWith('settle') ? '✓ ' : ''}
-                                ₹{event.amount.toLocaleString()}
-                            </p>
+                            {/* Details */}
+                            <div className="flex-1 space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-semibold">
+                                        {event.type === 'create_borrow' && 'Borrowed from'}
+                                        {event.type === 'create_lend' && 'Lent to'}
+                                        {event.type === 'settle_borrow' && 'Repayment to'}
+                                        {event.type === 'settle_lend' && 'Payment from'}
+                                        <span className="ml-1 text-primary">{event.personName}</span>
+                                    </span>
+                                    {event.type.startsWith('settle') && (
+                                        <span className="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">SETTLEMENT</span>
+                                    )}
+                                </div>
+                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                    <Calendar className="h-3 w-3" /> {event.date.toLocaleDateString()}
+                                    {event.description && event.description !== 'Record Created' && <span className="text-muted-foreground/60">• {event.description}</span>}
+                                </p>
+                            </div>
+
+                            {/* Amount */}
+                            <div className="text-right">
+                                <p className="text-lg font-bold">
+                                    {event.type.startsWith('settle') && <span className="mr-1">✓</span>}
+                                    <CurrencyDisplay
+                                        amount={event.amount}
+                                        type={event.type.includes('borrow') ? 'expense' : 'income'}
+                                    />
+                                </p>
+                            </div>
                         </div>
                     </div>
                 ))}

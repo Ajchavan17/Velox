@@ -1,44 +1,50 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 import dbConnect from '@/lib/db';
 import BankAccount from '@/models/BankAccount';
 
-export async function GET() {
+import mongoose from 'mongoose';
+
+export async function GET(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         await dbConnect();
-        const accounts = await BankAccount.find({ userId: session.user.id }).sort({ createdAt: -1 });
+        const accounts = await BankAccount.find({ userId: new mongoose.Types.ObjectId(user.id) }).sort({ createdAt: -1 });
 
         return NextResponse.json(accounts);
     } catch (error) {
         console.error('Error fetching accounts:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: `Internal Server Error: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
     }
 }
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const body = await req.json();
         const { bankName, accountType, accountName, balance } = body;
 
-        if (!bankName || !accountName) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        // Validation: For non-Cash accounts, bankName is required. For Cash, we can default it.
+        if (accountType !== 'Cash' && !bankName) {
+            return NextResponse.json({ error: 'Bank name is required' }, { status: 400 });
+        }
+
+        if (!accountName) {
+            return NextResponse.json({ error: 'Account name is required' }, { status: 400 });
         }
 
         await dbConnect();
         const newAccount = await BankAccount.create({
-            userId: session.user.id,
-            bankName,
+            userId: user.id,
+            bankName: accountType === 'Cash' ? (bankName || 'Cash Wallet') : bankName,
             accountType,
             accountName,
             balance: Number(balance) || 0,
@@ -47,14 +53,14 @@ export async function POST(req: Request) {
         return NextResponse.json(newAccount, { status: 201 });
     } catch (error) {
         console.error('Error creating account:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ error: `Internal Server Error: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
     }
 }
 
 export async function DELETE(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
+        const user = await getAuthUser(req);
+        if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -68,7 +74,7 @@ export async function DELETE(req: Request) {
         await dbConnect();
         const deletedAccount = await BankAccount.findOneAndDelete({
             _id: id,
-            userId: session.user.id,
+            userId: user.id,
         });
 
         if (!deletedAccount) {
@@ -79,5 +85,47 @@ export async function DELETE(req: Request) {
     } catch (error) {
         console.error('Error deleting account:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
+
+export async function PUT(req: Request) {
+    try {
+        const user = await getAuthUser(req);
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const body = await req.json();
+        const { _id, bankName, accountType, accountName, balance } = body;
+
+        if (!_id || !accountName) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        // For non-Cash, ensure bankName exists
+        if (accountType !== 'Cash' && !bankName) {
+            return NextResponse.json({ error: 'Bank name is required' }, { status: 400 });
+        }
+
+        await dbConnect();
+        const updatedAccount = await BankAccount.findOneAndUpdate(
+            { _id, userId: user.id },
+            {
+                bankName: accountType === 'Cash' ? (bankName || 'Cash Wallet') : bankName,
+                accountType,
+                accountName,
+                balance: Number(balance) || 0,
+            },
+            { new: true }
+        );
+
+        if (!updatedAccount) {
+            return NextResponse.json({ error: 'Account not found or unauthorized' }, { status: 404 });
+        }
+
+        return NextResponse.json(updatedAccount);
+    } catch (error) {
+        console.error('Error updating account:', error);
+        return NextResponse.json({ error: `Internal Server Error: ${error instanceof Error ? error.message : String(error)}` }, { status: 500 });
     }
 }
